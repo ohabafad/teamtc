@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team TC — Learning Tracker & Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root {
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --card: #ffffff;
+    --border: #dde3ec;
+    --accent: #2563eb;
+    --accent2: #7c3aed;
+    --green: #059669;
+    --yellow: #d97706;
+    --red: #dc2626;
+    --text: #1e293b;
+    --muted: #64748b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* GLASSMORPHISM FORM STYLES */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
+  }
+
+  nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    z-index: 50;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+  .logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+  }
+  .logo span { color: var(--text); }
+  .nav-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--bg);
+    border-radius: 10px;
+    padding: 4px;
+    border: 1px solid var(--border);
+  }
+  .nav-tab {
+    padding: 7px 16px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .nav-tab.active { background: var(--accent); color: #fff; }
+  .nav-tab:hover:not(.active) { color: var(--text); background: var(--surface); }
+  .week-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+    background: var(--bg);
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+  }
+
+  .page { display: none; padding: 28px 32px; max-width: 1100px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, #1e40af 0%, #4f46e5 100%);
+    border-radius: 16px;
+    padding: 30px 32px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 180px; height: 180px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 50%;
+  }
+  .hero-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; position: relative; }
+  .hero h1 { font-size: 1.5rem; font-weight: 700; color: #fff; }
+  .hero h1 span { color: #bfdbfe; }
+  .hero-subtitle { color: rgba(255,255,255,0.72); margin-top: 5px; font-size: 0.88rem; }
+  .hero-topic { text-align: right; }
+  .hero-topic-label { font-size: 0.72rem; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: 1px; }
+  .hero-topic-val { font-size: 1.05rem; font-weight: 700; color: #bfdbfe; margin-top: 4px; }
+  .cycle-info { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; position: relative; }
+  .cycle-pill {
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .pill-learn { background: rgba(255,255,255,0.15); color: #bfdbfe; }
+  .pill-practice { background: rgba(255,255,255,0.15); color: #ddd6fe; }
+  .pill-contest { background: rgba(255,255,255,0.15); color: #fde68a; }
+  .pill-review { background: rgba(255,255,255,0.15); color: #a7f3d0; }
+
+  .section-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    margin-top: 26px;
+  }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 16px;
+    text-align: center;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .stat-val {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .stat-label { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+
+  /* LEADERBOARD */
+  .leaderboard { display: flex; flex-direction: column; gap: 8px; }
+  .lb-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .lb-row:hover { border-color: var(--accent); box-shadow: 0 4px 14px rgba(37,99,235,0.1); }
+  .lb-rank { font-family: 'JetBrains Mono', monospace; font-size: 1rem; font-weight: 700; width: 28px; text-align: center; flex-shrink: 0; }
+  .rank-1 { color: #d97706; }
+  .rank-2 { color: #64748b; }
+  .rank-3 { color: #b45309; }
+  .rank-other { color: var(--muted); }
+  .lb-avatar { width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
+  .lb-info { flex: 1; }
+  .lb-name { font-weight: 600; font-size: 0.92rem; }
+  .lb-sub { font-size: 0.73rem; color: var(--muted); margin-top: 2px; }
+  .lb-right { text-align: right; flex-shrink: 0; }
+  .lb-score { font-family: 'JetBrains Mono', monospace; font-size: 1.05rem; font-weight: 700; color: var(--accent); }
+  .lb-streak { font-size: 0.73rem; color: var(--yellow); }
+  .progress-bar-wrap { flex: 1; max-width: 130px; }
+  .progress-bar { height: 5px; background: #e2e8f0; border-radius: 10px; overflow: hidden; margin-top: 5px; }
+  .progress-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.8s ease; }
+
+  /* MEMBER CARDS */
+  .member-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: border-color 0.2s, transform 0.18s, box-shadow 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  }
+  .member-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 22px rgba(37,99,235,0.1); }
+  .member-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .member-avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.1rem; }
+  .member-name { font-weight: 700; font-size: 1rem; color: var(--text); }
+  .member-role { font-size: 0.74rem; color: var(--muted); }
+  .member-stats { display: flex; gap: 10px; margin-bottom: 14px; }
+  .m-stat { text-align: center; flex: 1; background: var(--bg); border-radius: 8px; padding: 8px 4px; }
+  .m-stat-val { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; }
+  .m-stat-label { font-size: 0.66rem; color: var(--muted); margin-top: 2px; }
+  .topic-tag { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; background: #eff6ff; color: var(--accent); border: 1px solid #bfdbfe; margin: 2px; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; margin: 2px; }
+  .badge-gold { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+  .badge-green { background: #f0fdf4; color: var(--green); border: 1px solid #bbf7d0; }
+
+  /* TARGETS */
+  .target-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+  .target-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .target-title { font-weight: 700; font-size: 0.95rem; }
+  .task-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+  .task-item:last-child { border-bottom: none; }
+  .task-check { width: 18px; height: 18px; border-radius: 5px; border: 2px solid #cbd5e1; flex-shrink: 0; margin-top: 2px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+  .task-check.done { background: var(--green); border-color: var(--green); }
+  .task-check.done::after { content: '✓'; font-size: 0.68rem; color: #fff; font-weight: 700; }
+  .task-text { font-size: 0.87rem; flex: 1; color: var(--text); }
+  .task-text.done { text-decoration: line-through; color: var(--muted); }
+  .task-who { font-size: 0.7rem; color: var(--accent); font-family: 'JetBrains Mono', monospace; margin-top: 2px; }
+
+  /* CONTEST */
+  .contest-table { width: 100%; border-collapse: collapse; }
+  .contest-table th { text-align: center; padding: 12px 14px; font-size: 0.7rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid var(--border); }
+  .contest-table th:first-child, .contest-table td:first-child { text-align: left; }
+  .contest-table td { padding: 14px; font-size: 0.87rem; border-bottom: 1px solid #f1f5f9; text-align: center; }
+  .contest-table tr:hover td { background: #f8fafc; }
+
+  /* ROADMAP */
+  .roadmap-year { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .year-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .year-num { font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 6px; background: #eff6ff; color: var(--accent); border: 1px solid #bfdbfe; }
+  .year-title { font-weight: 700; color: var(--text); }
+  .roadmap-items { display: flex; flex-wrap: wrap; gap: 8px; }
+  .roadmap-item { padding: 6px 14px; border-radius: 8px; font-size: 0.8rem; border: 1px solid var(--border); color: var(--muted); background: var(--bg); }
+  .roadmap-item.done-item { background: #f0fdf4; border-color: #bbf7d0; color: var(--green); }
+  .roadmap-item.current-item { background: #eff6ff; border-color: #93c5fd; color: var(--accent); font-weight: 600; }
+
+  /* ANNOUNCE */
+  .announce-card { background: #f8faff; border: 1px solid #dbeafe; border-radius: 12px; padding: 16px 20px; margin-bottom: 10px; }
+  .announce-meta { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .announce-from { font-size: 0.78rem; font-weight: 600; color: var(--accent); }
+  .announce-time { font-size: 0.72rem; color: var(--muted); }
+  .announce-text { font-size: 0.87rem; color: var(--text); }
+
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+  .dot-afad { background: #2563eb; }
+  .dot-arafat { background: #7c3aed; }
+  .dot-munna { background: #059669; }
+  .dot-taky { background: #d97706; }
+
+  .color-afad { background: #dbeafe; color: #1d4ed8; }
+  .color-arafat { background: #ede9fe; color: #6d28d9; }
+  .color-munna { background: #d1fae5; color: #065f46; }
+  .color-taky { background: #fef3c7; color: #92400e; }
+
+  @media (max-width: 700px) {
+    nav { padding: 12px 16px; flex-wrap: wrap; gap: 8px; }
+    .page { padding: 16px; }
+    .grid-2, .grid-4 { grid-template-columns: 1fr; }
+    .nav-tabs { order: 3; width: 100%; overflow-x: auto; }
+    .progress-bar-wrap { display: none; }
+  }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+<div id="toastContainer" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2"></div>
+
+<!-- INITIALIZATION/SETUP MODAL -->
+<div id="setupModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[1000] flex items-center justify-center p-4 hidden">
+  <div class="glass-card w-full max-w-xl rounded-2xl p-8 max-h-[90vh] overflow-y-auto">
+    <div class="text-center mb-6">
+      <span class="text-4xl">🚀</span>
+      <h2 class="text-2xl font-bold mt-2 text-indigo-900">TC Tracker Setup Wizard</h2>
+      <p class="text-sm text-slate-500 mt-1">This is a one-time initial configuration window. Configure emails & passwords.</p>
+    </div>
+    
+    <div class="space-y-4">
+      <div class="p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
+        <label class="block text-xs font-bold uppercase tracking-wider text-indigo-700 mb-1">Set Secure Admin Password (for Afad)</label>
+        <p class="text-xs text-slate-500 mb-2">Used to access the Admin Panel and reset passwords anytime.</p>
+        <input type="password" id="setupAdminPassword" placeholder="e.g. secretAdmin123" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-mono">
+      </div>
+
+      <h3 class="font-bold text-slate-700 text-sm border-b pb-1">Register Members Logins:</h3>
+      
+      <!-- Afad Registration row -->
+      <div class="p-3 bg-white border rounded-xl space-y-2">
+        <div class="flex items-center gap-2"><span class="dot dot-afad"></span><span class="font-bold text-sm text-slate-700">Afad (Me / Admin)</span></div>
+        <div class="grid grid-cols-2 gap-2">
+          <input type="email" id="regEmail-afad" placeholder="afad@email.com" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500">
+          <input type="password" id="regPass-afad" placeholder="Afad password" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500 font-mono">
+        </div>
+      </div>
+
+      <!-- Arafat Registration row -->
+      <div class="p-3 bg-white border rounded-xl space-y-2">
+        <div class="flex items-center gap-2"><span class="dot dot-arafat"></span><span class="font-bold text-sm text-slate-700">Arafat</span></div>
+        <div class="grid grid-cols-2 gap-2">
+          <input type="email" id="regEmail-arafat" placeholder="arafat@email.com" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500">
+          <input type="password" id="regPass-arafat" placeholder="Arafat password" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500 font-mono">
+        </div>
+      </div>
+
+      <!-- Munna Registration row -->
+      <div class="p-3 bg-white border rounded-xl space-y-2">
+        <div class="flex items-center gap-2"><span class="dot dot-munna"></span><span class="font-bold text-sm text-slate-700">Munna</span></div>
+        <div class="grid grid-cols-2 gap-2">
+          <input type="email" id="regEmail-munna" placeholder="munna@email.com" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500">
+          <input type="password" id="regPass-munna" placeholder="Munna password" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500 font-mono">
+        </div>
+      </div>
+
+      <!-- Taky Registration row -->
+      <div class="p-3 bg-white border rounded-xl space-y-2">
+        <div class="flex items-center gap-2"><span class="dot dot-taky"></span><span class="font-bold text-sm text-slate-700">Taky</span></div>
+        <div class="grid grid-cols-2 gap-2">
+          <input type="email" id="regEmail-taky" placeholder="taky@email.com" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500">
+          <input type="password" id="regPass-taky" placeholder="Taky password" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500 font-mono">
+        </div>
+      </div>
+
+      <button id="submitSetupBtn" class="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold hover:opacity-95 transition text-sm">
+        Complete Registration & Initialize App
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- SIGN IN OVERLAY -->
+<div id="loginOverlay" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[900] flex items-center justify-center p-4">
+  <div class="glass-card w-full max-w-md rounded-2xl p-8 shadow-2xl relative">
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 font-black text-2xl tracking-widest mb-2">TC</div>
+      <h2 class="text-2xl font-bold text-slate-800">Team TC Tracker Sign In</h2>
+      <p class="text-xs text-slate-500 mt-1">Please select your profile and enter your credentials.</p>
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Select Profile</label>
+        <select id="loginUserSelect" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-white cursor-pointer font-medium text-slate-700">
+          <option value="afad">Afad (Web Dev - Admin)</option>
+          <option value="arafat">Arafat (AI/ML)</option>
+          <option value="munna">Munna (App Dev)</option>
+          <option value="taky">Taky (Cybersecurity)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Email Address</label>
+        <input type="email" id="loginEmail" placeholder="Enter your email" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Passphrase / Password</label>
+        <input type="password" id="loginPassword" placeholder="Enter password" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono">
+      </div>
+
+      <button id="loginSubmitBtn" class="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold transition shadow-lg shadow-blue-500/25 text-sm mt-2">
+        Verify Credentials & Enter Tracker
+      </button>
+
+      <div class="text-center pt-2">
+        <button id="adminQuickLoginBtn" class="text-xs text-slate-500 hover:text-indigo-600 underline font-medium">
+          Access Admin Panel Directly
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN VERIFICATION PROMPT -->
+<div id="adminAuthModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1100] flex items-center justify-center p-4 hidden">
+  <div class="glass-card w-full max-w-sm rounded-xl p-6 shadow-2xl">
+    <div class="text-center mb-4">
+      <span class="text-3xl">🛡️</span>
+      <h3 class="text-lg font-bold text-indigo-950 mt-1">Admin Panel Access</h3>
+      <p class="text-xs text-slate-500">Only Afad can access this panel. Enter the unique Admin Password.</p>
+    </div>
+    <div class="space-y-4">
+      <input type="password" id="adminVerifyPassInput" placeholder="Admin password" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-mono text-center">
+      <div class="flex gap-2">
+        <button id="cancelAdminAuthBtn" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs transition">Cancel</button>
+        <button id="submitAdminAuthBtn" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-xs transition">Verify Admin</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NEW CONTEST CATEGORY DYNAMIC FORM MODAL -->
+<div id="newCategoryModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1100] flex items-center justify-center p-4 hidden">
+  <div class="glass-card w-full max-w-sm rounded-xl p-6 shadow-2xl">
+    <div class="text-center mb-4">
+      <span class="text-3xl">🗂️</span>
+      <h3 class="text-lg font-bold text-slate-800 mt-1">Create Contest Category</h3>
+      <p class="text-xs text-slate-500">Provide a unique name for the new custom contest section.</p>
+    </div>
+    <div class="space-y-4">
+      <input type="text" id="newCategoryNameInput" placeholder="e.g., Codeforces Virtuals" class="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium">
+      <div class="flex gap-2">
+        <button id="cancelCategoryModalBtn" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs transition">Cancel</button>
+        <button id="submitCategoryModalBtn" class="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs transition">Create Section</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN WORKSPACE NAVIGATION -->
+<nav>
+  <div class="logo">TEAM<span> TC</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('dashboard', this)">Dashboard</button>
+    <button class="nav-tab" onclick="showPage('members', this)">Members</button>
+    <button class="nav-tab" onclick="showPage('targets', this)">Targets</button>
+    <button class="nav-tab" onclick="showPage('contests', this)">Contests</button>
+    <button class="nav-tab" onclick="showPage('roadmap', this)">Roadmap</button>
+    <button class="nav-tab border-l pl-2 border-slate-300 text-indigo-600 font-semibold" onclick="tryOpenAdmin(this)">🔒 Admin Panel</button>
+  </div>
+  <div class="flex items-center gap-4">
+    <div class="hidden sm:flex flex-col text-right">
+      <div class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+        <span id="activeDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+        <span id="navUserName">Loading...</span>
+      </div>
+      <div class="text-[10px] text-slate-400 font-medium tracking-wide uppercase" id="navUserRole">Student Profile</div>
+    </div>
+    <button onclick="logout()" class="px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 rounded-lg text-xs font-bold transition border border-slate-200 flex items-center gap-1">
+      Logout
+    </button>
+    <div class="week-badge" id="weekBadge">Jun 19</div>
+  </div>
+</nav>
+
+<!-- DASHBOARD PAGE -->
+<div class="page active" id="page-dashboard">
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+    <!-- HERO -->
+    <div class="hero lg:col-span-3">
+      <div class="hero-top">
+        <div>
+          <h1>CSE Journey <span>Begins 🚀</span></h1>
+          <div class="hero-subtitle">Track progress · Compete · Level up together</div>
+        </div>
+        <div class="hero-topic">
+          <div class="hero-topic-label">Current Topic</div>
+          <div id="heroTopicText" class="hero-topic-val">C Language — Arrays</div>
+        </div>
+      </div>
+      <div class="cycle-info">
+        <div class="cycle-pill pill-learn">📖 Day 1–3: Learn</div>
+        <div class="cycle-pill pill-practice">💻 Day 4–5: Practice</div>
+        <div class="cycle-pill pill-contest">⚔️ Day 6: Contest</div>
+        <div class="cycle-pill pill-review">✅ Day 7: Review</div>
+      </div>
+    </div>
+
+    <!-- PERSONAL HUB CARD -->
+    <div class="card border-blue-100 bg-gradient-to-b from-blue-50/50 to-indigo-50/50 flex flex-col justify-between">
+      <div>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">My Daily Hub</h4>
+        <p class="text-xs text-slate-500 mb-3">Keep your stats up-to-date and reliable!</p>
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between items-center bg-white p-2 rounded-lg border">
+            <span class="font-medium text-slate-600">Solved count:</span>
+            <input type="number" id="mySolvedInput" class="w-14 text-center border font-semibold py-0.5 rounded outline-none focus:border-blue-500" value="0">
+          </div>
+          <div class="flex justify-between items-center bg-white p-2 rounded-lg border">
+            <span class="font-medium text-slate-600">Daily streak:</span>
+            <input type="number" id="myStreakInput" class="w-14 text-center border font-semibold py-0.5 rounded outline-none focus:border-blue-500" value="0">
+          </div>
+        </div>
+      </div>
+      <button onclick="updateMyStats()" class="w-full mt-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-sm">
+        Sync My Stats
+      </button>
+    </div>
+  </div>
+
+  <div class="section-title">Team Stats</div>
+  <div class="grid-4">
+    <div class="stat-card"><div class="stat-val" id="totalSolved">0</div><div class="stat-label">Problems Solved</div></div>
+    <div class="stat-card"><div class="stat-val">4</div><div class="stat-label">Team Members</div></div>
+    <div class="stat-card"><div class="stat-val" id="currentWeekNumText">1</div><div class="stat-label">Current Week</div></div>
+    <div class="stat-card"><div class="stat-val" id="topStreak">🔥 0</div><div class="stat-label">Top Streak</div></div>
+  </div>
+
+  <div class="section-title">Leaderboard</div>
+  <div class="leaderboard" id="leaderboard"></div>
+
+  <div class="section-title">Announcements</div>
+  <div id="announcementsList" class="space-y-2"></div>
+</div>
+
+<!-- MEMBERS PAGE -->
+<div class="page" id="page-members">
+  <div class="section-title">All Members</div>
+  <div class="grid-2" id="memberCards"></div>
+</div>
+
+<!-- TARGETS PAGE -->
+<div class="page" id="page-targets">
+  <div class="section-title" id="weekTargetsTitle">Week 1 Targets — C Arrays</div>
+  <div class="grid-2">
+    <div class="target-card">
+      <div class="target-header"><div class="target-title">📖 Learning Phase (Day 1–3)</div></div>
+      <div id="learnTasks"></div>
+    </div>
+    <div class="target-card">
+      <div class="target-header"><div class="target-title">💻 Practice Phase (Day 4–5)</div></div>
+      <div id="practiceTasks"></div>
+    </div>
+  </div>
+  <div style="margin-top:14px;" class="grid-2">
+    <div class="target-card">
+      <div class="target-header"><div class="target-title">⚔️ Contest Day (Day 6)</div></div>
+      <div id="contestTasks"></div>
+    </div>
+    <div class="target-card">
+      <div class="target-header"><div class="target-title">✅ Review Day (Day 7)</div></div>
+      <div id="reviewTasks"></div>
+    </div>
+  </div>
+  <div class="section-title" style="margin-top:26px;">Member Progress This Week</div>
+  <div class="card"><div id="memberProgress"></div></div>
+</div>
+
+<!-- CONTESTS PAGE (MULTIPLE CATEGORIES & INTERACTION FORMS) -->
+<div class="page" id="page-contests">
+  <div class="section-title">Contest Management & Categorization</div>
+  
+  <!-- Categories Row -->
+  <div class="flex flex-wrap items-center gap-2 mb-6">
+    <div id="contestCategoriesContainer" class="flex flex-wrap gap-2">
+      <!-- Dynamic category tabs -->
+    </div>
+    <!-- New section trigger available only to Afad (rendered dynamically) -->
+    <button id="newCategoryTriggerBtn" class="px-4 py-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 transition text-xs font-bold hidden items-center gap-1.5" onclick="openNewCategoryModal()">
+      <span>➕</span> Create New Section
+    </button>
+  </div>
+
+  <!-- Contest Table Container -->
+  <div class="card overflow-x-auto mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="font-bold text-lg text-slate-800" id="activeCategoryHeading">Group Contest</h3>
+      <span class="text-xs px-2.5 py-1 bg-blue-100 text-blue-700 font-bold rounded-full font-mono" id="activeCategoryBadge">Active Row</span>
+    </div>
+    <table class="contest-table min-w-[700px]">
+      <thead>
+        <tr>
+          <th>Contest</th>
+          <th>Date</th>
+          <th>Topic</th>
+          <th>Afad</th>
+          <th>Arafat</th>
+          <th>Munna</th>
+          <th>Taky</th>
+        </tr>
+      </thead>
+      <tbody id="contestBody">
+        <!-- Loaded dynamically based on category selection -->
+      </tbody>
+    </table>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- MEMBER SCORE SUBMISSION BOX -->
+    <div class="card border border-slate-200 bg-white">
+      <h4 class="font-bold text-sm text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-1.5 text-blue-600">
+        📝 Report Your Contest Score
+      </h4>
+      <p class="text-xs text-slate-500 mb-4">Submit your authentic score out of 10. Admin override values take absolute precedence.</p>
+      
+      <div class="space-y-3">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Select Contest</label>
+          <select id="userSubmitContestSelect" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 bg-white">
+            <!-- Dynamic Contests Options -->
+          </select>
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Your Score (Out of 10)</label>
+          <input type="number" id="userSubmittedScoreInput" min="0" max="10" step="0.5" placeholder="e.g. 8.5" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500">
+        </div>
+        <button onclick="submitUserContestScore()" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition">
+          Save Score Record
+        </button>
+      </div>
+    </div>
+
+    <!-- DYNAMIC PRIVILEGED ADMIN CONTEST ACTION BOARD (Directly on view) -->
+    <div id="directAdminContestPanel" class="card border border-indigo-200 bg-gradient-to-br from-slate-50 to-indigo-50 hidden">
+      <div class="flex justify-between items-center border-b pb-2 mb-3">
+        <h4 class="font-bold text-sm text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
+          🛡️ Admin Contest Control Center
+        </h4>
+        <span class="text-[9px] px-1.5 py-0.5 bg-indigo-600 text-white font-bold rounded uppercase">Afad's Console</span>
+      </div>
+
+      <div class="space-y-4">
+        <!-- New contest inside selected Category -->
+        <div>
+          <h5 class="text-xs font-bold text-slate-700 mb-2">➕ Add New Contest to this Section</h5>
+          <div class="grid grid-cols-2 gap-2 mb-2">
+            <input type="text" id="admNewContestName" placeholder="Contest #2" class="px-2.5 py-1.5 border rounded-lg text-xs bg-white">
+            <input type="text" id="admNewContestDate" placeholder="Week 1 - Day 6" class="px-2.5 py-1.5 border rounded-lg text-xs bg-white">
+          </div>
+          <div class="flex gap-2">
+            <input type="text" id="admNewContestTopic" placeholder="Topic: Functions & Pointers" class="flex-1 px-2.5 py-1.5 border rounded-lg text-xs bg-white">
+            <button onclick="addNewContestToCategory()" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition">
+              Create
+            </button>
+          </div>
+        </div>
+
+        <!-- Override any score directly -->
+        <div class="border-t pt-3">
+          <h5 class="text-xs font-bold text-slate-700 mb-2">✏️ Override / Set Member Scores</h5>
+          <div class="grid grid-cols-3 gap-2 mb-2">
+            <div>
+              <label class="block text-[9px] text-slate-400 mb-0.5">Contest</label>
+              <select id="admScoreOverrideContestSelect" class="w-full px-2 py-1.5 border rounded text-xs bg-white">
+                <!-- Dynamic choices -->
+              </select>
+            </div>
+            <div>
+              <label class="block text-[9px] text-slate-400 mb-0.5">Member</label>
+              <select id="admScoreOverrideUserSelect" class="w-full px-2 py-1.5 border rounded text-xs bg-white">
+                <option value="afad">Afad</option>
+                <option value="arafat">Arafat</option>
+                <option value="munna">Munna</option>
+                <option value="taky">Taky</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[9px] text-slate-400 mb-0.5">Score (Max 10)</label>
+              <input type="number" id="admScoreOverrideVal" min="0" max="10" step="0.5" placeholder="Score" class="w-full px-2 py-1.5 border rounded text-xs bg-white">
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="overrideMemberScore()" class="w-full py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-bold transition">
+              Apply Overridden Score
+            </button>
+            <button onclick="clearOverrideScore()" class="py-1.5 px-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-xs font-medium transition">
+              Reset Override
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">All-Time Contest Rankings</div>
+  <div class="leaderboard" id="contestLeaderboard"></div>
+</div>
+
+<!-- ROADMAP PAGE -->
+<div class="page" id="page-roadmap">
+  <div class="section-title">4-Year CSE Roadmap</div>
+  <div id="roadmapContent"></div>
+  <div class="section-title">Upcoming Topics</div>
+  <div class="card"><div style="display:flex;flex-wrap:wrap;gap:8px;" id="upcomingTopics"></div></div>
+</div>
+
+<!-- ADMIN CONTROL PANEL PAGE -->
+<div class="page" id="page-admin">
+  <div class="hero bg-gradient-to-r from-slate-900 to-indigo-950 p-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-xl font-bold flex items-center gap-2">🛡️ Team TC — Controller Center</h1>
+        <p class="text-xs text-indigo-200 mt-1">Hello, Afad. Reset member passwords, change topic schedules, edit announcements, and manage team details.</p>
+      </div>
+      <div class="px-3 py-1 bg-red-600 text-[10px] uppercase font-bold tracking-wider rounded-full">Secure Session</div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+    <!-- MEMBER PASSWORD / LOGIN MANAGER -->
+    <div class="card border border-indigo-100 flex flex-col justify-between">
+      <div>
+        <h3 class="font-bold text-slate-800 text-sm border-b pb-2 mb-4 flex items-center gap-1.5 text-indigo-600">
+          🔐 Manage Member Credentials (Set & Reset Passwords)
+        </h3>
+        <div class="space-y-3">
+          <div id="adminUserPassRows" class="space-y-3">
+            <!-- Dynamic member control rows mapped here -->
+          </div>
+        </div>
+      </div>
+      <div class="pt-4 border-t mt-4 flex justify-between items-center">
+        <p class="text-[10px] text-slate-400">Remember to notify members of updated credentials.</p>
+        <button onclick="saveAdminCredentials()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition">
+          Update Credentials
+        </button>
+      </div>
+    </div>
+
+    <!-- ANNOUNCEMENT AND GLOBAL TOPIC CONFIG -->
+    <div class="card border border-indigo-100 space-y-4">
+      <h3 class="font-bold text-slate-800 text-sm border-b pb-2 flex items-center gap-1.5 text-indigo-600">
+        📢 Post Announcements & Set Topics
+      </h3>
+      
+      <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Current Topic</label>
+        <input type="text" id="adminTopicInput" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-indigo-500">
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Week badge date (or type "Auto" for live date)</label>
+        <input type="text" id="adminWeekBadgeInput" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-indigo-500">
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Current Week Number</label>
+          <input type="number" id="adminWeekNumInput" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Total Score Multiplier</label>
+          <input type="number" id="adminScoreMultiplier" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-indigo-500" value="10">
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Post New Announcement</label>
+        <div class="flex gap-2">
+          <input type="text" id="adminAnnounceText" placeholder="Welcome to the next level of Arrays!" class="flex-1 px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-indigo-500">
+          <button onclick="postAdminAnnouncement()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition">Post</button>
+        </div>
+      </div>
+
+      <div class="bg-red-50 border border-red-200 p-3 rounded-lg flex items-center justify-between">
+        <div>
+          <h4 class="text-xs font-bold text-red-800">Dangerous Operations</h4>
+          <p class="text-[9px] text-red-600">Completely reset the learning tracker's cloud records.</p>
+        </div>
+        <button onclick="triggerResetSystem()" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-bold transition">
+          Wipe Database
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FIREBASE INTEGRATION & PORTAL PROGRAMMING CORE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'team-tc-tracker-2026';
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+  apiKey: "",
+  authDomain: "unconfigured-sandbox.firebaseapp.com",
+  projectId: "unconfigured-sandbox",
+  storageBucket: "unconfigured-sandbox.appspot.com",
+  messagingSenderId: "12345",
+  appId: "1:12345:web:12345"
+};
+
+const hasActualFirebase = firebaseConfig.apiKey !== "";
+
+let db, auth;
+let appState = null;
+let currentLoggedInUserId = null;
+let isAdminSessionVerified = false;
+
+// Default structure updated with multiple categorized contests and submission-priority scoring
+const defaultState = {
+  initialized: false,
+  adminPassword: "admin",
+  currentTopic: "C Language — Arrays",
+  currentWeekNum: 1,
+  weekBadgeDate: "Auto",
+  members: {
+    afad: { id:'afad',   name:'Afad',   email:'', password:'', color:'color-afad',   dot:'dot-afad',   specialization:'Web Dev',      solved:0, streak:0, score:0, weekProgress:0, badges:['🌟 Newcomer'], topics:['C Basics'] },
+    arafat: { id:'arafat', name:'Arafat', email:'', password:'', color:'color-arafat', dot:'dot-arafat', specialization:'AI/ML',        solved:0, streak:0, score:0, weekProgress:0, badges:['🌟 Newcomer'], topics:['C Basics'] },
+    munna: { id:'munna',  name:'Munna',  email:'', password:'', color:'color-munna',  dot:'dot-munna',  specialization:'App Dev',      solved:0, streak:0, score:0, weekProgress:0, badges:['🌟 Newcomer'], topics:['C Basics'] },
+    taky: { id:'taky',   name:'Taky',   email:'', password:'', color:'color-taky',   dot:'dot-taky',   specialization:'Cybersecurity',solved:0, streak:0, score:0, weekProgress:0, badges:['🌟 Newcomer'], topics:['C Basics'] },
+  },
+  taskState: {},
+  tasks: {
+    learn: [
+      { text:'What is an Array? Declaration & Initialization', who:'All' },
+      { text:'1D Array: input, output, traversal', who:'All' },
+      { text:'Array operations: search, insert, delete', who:'All' },
+      { text:'Pass array to function', who:'All' },
+      { text:'2D Array basics (matrix)', who:'All' },
+    ],
+    practice: [
+      { text:'Find max & min in array', who:'All' },
+      { text:'Reverse an array', who:'All' },
+      { text:'Sum and average of array elements', who:'All' },
+      { text:'Check if array is sorted', who:'All' },
+      { text:'Count even & odd numbers', who:'All' },
+    ],
+    contest: [
+      { text:'Mini contest: 3 array problems (60 min)', who:'All' },
+      { text:'Submit on any judge or paper', who:'All' },
+      { text:'Record score & rank', who:'All' },
+    ],
+    review: [
+      { text:'Each person explains one concept to the group', who:'All' },
+      { text:'Note down mistakes from contest', who:'All' },
+      { text:'Plan next week: Strings in C', who:'All' },
+      { text:'Update tracker scores', who:'All' },
+    ]
+  },
+  contests: {
+    categories: ["Virtual Contest", "Private Contest", "Group Contest"],
+    activeCategory: "Group Contest",
+    data: {
+      "Virtual Contest": [],
+      "Private Contest": [],
+      "Group Contest": [
+        {
+          id: "contest_1",
+          name: "Contest #1",
+          date: "Week 1 - Day 6",
+          topic: "C Arrays",
+          userSubmissions: { afad: null, arafat: null, munna: null, taky: null },
+          adminOverrides: { afad: null, arafat: null, munna: null, taky: null }
+        }
+      ]
+    }
+  },
+  announcements: [
+    { from: "🎉 Team TC", text: "Welcome to the tracker! Week 1 starts now. First topic: <strong>C Language — Arrays</strong>. Let's go! 💪", time: "Today" },
+    { from: "📌 Reminder", text: "7-day cycle: Learn 3 days → Practice 2 days → Contest 1 day → Review 1 day. Stay consistent!", time: "Pinned" }
+  ],
+  roadmap: [
+    { year:'Year 1', title:'Foundation', items:[
+      {text:'C Language',done:true},{text:'C Arrays',current:true},{text:'C Strings',done:false},
+      {text:'C Pointers',done:false},{text:'C++ Basics',done:false},{text:'OOP Concepts',done:false},
+      {text:'DSA Basics',done:false},{text:'First Mini Project',done:false}
+    ]},
+    { year:'Year 2', title:'Specialization Begins', items:[
+      {text:'Advanced DSA',done:false},{text:'Web / ML / App / Cyber',done:false},
+      {text:'First Internship',done:false},{text:'ICPC Regional',done:false},{text:'Open Source',done:false}
+    ]},
+    { year:'Year 3', title:'Build Real Things', items:[
+      {text:'Major Team Project',done:false},{text:'Internship',done:false},
+      {text:'Technical Blog',done:false},{text:'GitHub Portfolio',done:false}
+    ]},
+    { year:'Year 4', title:'Career Launch', items:[
+      {text:'Job Preparation',done:false},{text:'Resume & LinkedIn',done:false},
+      {text:'Mock Interviews',done:false},{text:'First Job / Grad School',done:false}
+    ]}
+  ],
+  upcomingTopics: ['📝 Strings in C','🔗 Pointers','🗂️ Structures','📁 File I/O','⚡ C++ Basics','🔄 Recursion','📊 Sorting Algorithms','🔍 Searching','🌳 Linked List','🏗️ Stacks & Queues']
+};
+
+function showToast(message, isError = false) {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `px-4 py-3 rounded-xl shadow-lg text-xs font-bold text-white transition-all duration-300 transform translate-y-2 opacity-0 flex items-center gap-2 ${
+    isError ? 'bg-red-600' : 'bg-green-600'
+  }`;
+  toast.innerHTML = `<span>${isError ? '⚠️' : '✅'}</span><span>${message}</span>`;
+  container.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.classList.remove('translate-y-2', 'opacity-0');
+  }, 10);
+  
+  setTimeout(() => {
+    toast.classList.add('translate-y-2', 'opacity-0');
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
+}
+
+function getCurrentFormattedDate() {
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const d = new Date();
+  return `${months[d.getMonth()]} ${d.getDate()}`;
+}
+
+// Ensure old state maps seamlessly to new structural categorized database
+function runStateMigrations(state) {
+  let modified = false;
+  if (!state.contests || Array.isArray(state.contests)) {
+    const oldList = Array.isArray(state.contests) ? state.contests : [];
+    state.contests = {
+      categories: ["Virtual Contest", "Private Contest", "Group Contest"],
+      activeCategory: "Group Contest",
+      data: {
+        "Virtual Contest": [],
+        "Private Contest": [],
+        "Group Contest": oldList.map((c, i) => {
+          const resultsObj = c.results || {};
+          return {
+            id: `migrated_${Date.now()}_${i}`,
+            name: c.name || `Contest #${i + 1}`,
+            date: c.date || "Week 1 - Day 6",
+            topic: c.topic || "C Arrays",
+            userSubmissions: { afad: null, arafat: null, munna: null, taky: null },
+            adminOverrides: {
+              afad: resultsObj.afad && resultsObj.afad !== '—' ? parseFloat(resultsObj.afad) || null : null,
+              arafat: resultsObj.arafat && resultsObj.arafat !== '—' ? parseFloat(resultsObj.arafat) || null : null,
+              munna: resultsObj.munna && resultsObj.munna !== '—' ? parseFloat(resultsObj.munna) || null : null,
+              taky: resultsObj.taky && resultsObj.taky !== '—' ? parseFloat(resultsObj.taky) || null : null,
+            }
+          };
+        })
+      }
+    };
+    modified = true;
+  }
+  
+  // Backwards compatibility for newly added categories fields
+  if (!state.contests.categories) {
+    state.contests.categories = ["Virtual Contest", "Private Contest", "Group Contest"];
+    modified = true;
+  }
+  if (!state.contests.activeCategory) {
+    state.contests.activeCategory = "Group Contest";
+    modified = true;
+  }
+  if (!state.contests.data) {
+    state.contests.data = { "Virtual Contest": [], "Private Contest": [], "Group Contest": [] };
+    modified = true;
+  }
+  return { state, modified };
+}
+
+// Compute dynamic scores globally based on solves, streaks and weighted contest averages
+function recalculateGlobalPerformanceScores() {
+  const membersList = Object.keys(appState.members);
+  
+  membersList.forEach(userId => {
+    let contestSum = 0;
+    let countedContests = 0;
+    
+    // Scan all categories and accumulated scores
+    Object.keys(appState.contests.data).forEach(cat => {
+      const contestArray = appState.contests.data[cat] || [];
+      contestArray.forEach(cont => {
+        const adminVal = cont.adminOverrides?.[userId];
+        const userVal = cont.userSubmissions?.[userId];
+        
+        let finalScore = 0;
+        if (adminVal !== undefined && adminVal !== null) {
+          finalScore = parseFloat(adminVal) || 0;
+        } else if (userVal !== undefined && userVal !== null) {
+          finalScore = parseFloat(userVal) || 0;
+        }
+        
+        contestSum += finalScore;
+        countedContests++;
+      });
+    });
+
+    const m = appState.members[userId];
+    const baseMult = 10; 
+    // formula: (Solved * 10) + (Streak * 5) + (Contest total out of 10 converted to weighted scale)
+    m.score = Math.round((m.solved * baseMult) + (m.streak * 5) + (contestSum * baseMult));
+  });
+}
+
+async function initializeAppPortal() {
+  if (hasActualFirebase) {
+    try {
+      const app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+      auth = getAuth(app);
+      
+      await signInAnonymously(auth);
+      
+      const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'trackerState');
+      
+      onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const rawState = docSnap.data();
+          const { state, modified } = runStateMigrations(rawState);
+          appState = state;
+          
+          if (modified) {
+            writeStateToDB();
+          } else {
+            handleStateSync();
+          }
+        } else {
+          appState = JSON.parse(JSON.stringify(defaultState));
+          showSetupModal();
+        }
+      }, (error) => {
+        console.error("Firestore read error: ", error);
+        loadLocalFallback();
+      });
+    } catch (e) {
+      console.warn("Firebase Init failed. Falling back to Offline Local mode.", e);
+      loadLocalFallback();
+    }
+  } else {
+    loadLocalFallback();
+  }
+}
+
+function loadLocalFallback() {
+  const localVal = localStorage.getItem('teamTC_cloudState_v2');
+  if (localVal) {
+    const raw = JSON.parse(localVal);
+    const { state } = runStateMigrations(raw);
+    appState = state;
+  } else {
+    appState = JSON.parse(JSON.stringify(defaultState));
+  }
+  handleStateSync();
+}
+
+async function writeStateToDB() {
+  recalculateGlobalPerformanceScores();
+  if (hasActualFirebase && db) {
+    try {
+      const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'trackerState');
+      await setDoc(docRef, appState);
+    } catch (e) {
+      console.error("Firestore Save Error", e);
+    }
+  } else {
+    localStorage.setItem('teamTC_cloudState_v2', JSON.stringify(appState));
+    handleStateSync();
+  }
+}
+
+function showSetupModal() {
+  document.getElementById('setupModal').classList.remove('hidden');
+}
+
+function handleStateSync() {
+  if (!appState.initialized) {
+    showSetupModal();
+  } else {
+    document.getElementById('setupModal').classList.add('hidden');
+    
+    const savedUser = sessionStorage.getItem('tc_user');
+    if (savedUser && appState.members[savedUser]) {
+      currentLoggedInUserId = savedUser;
+      document.getElementById('loginOverlay').classList.add('hidden');
+      syncPersonalStatsWidget();
+      renderAllViews();
+    } else {
+      document.getElementById('loginOverlay').classList.remove('hidden');
+    }
+  }
+}
+
+// SETUP EVENT LISTENER
+document.getElementById('submitSetupBtn').addEventListener('click', async () => {
+  const adminPassInput = document.getElementById('setupAdminPassword').value.trim();
+  if (!adminPassInput) {
+    showToast("Please enter a secure Admin password first!", true);
+    return;
+  }
+
+  const ids = ['afad', 'arafat', 'munna', 'taky'];
+  let missing = false;
+  
+  ids.forEach(id => {
+    const email = document.getElementById(`regEmail-${id}`).value.trim();
+    const pass = document.getElementById(`regPass-${id}`).value.trim();
+    if (!email || !pass) {
+      missing = true;
+    } else {
+      appState.members[id].email = email;
+      appState.members[id].password = pass;
+    }
+  });
+
+  if (missing) {
+    showToast("Please provide all 4 member emails & initial passwords!", true);
+    return;
+  }
+
+  appState.adminPassword = adminPassInput;
+  appState.initialized = true;
+
+  await writeStateToDB();
+  showToast("Team TC Tracker successfully configured! Feel free to log in.");
+  document.getElementById('setupModal').classList.add('hidden');
+});
+
+// LOGIN ACTION
+document.getElementById('loginSubmitBtn').addEventListener('click', () => {
+  const selectedUser = document.getElementById('loginUserSelect').value;
+  const emailInput = document.getElementById('loginEmail').value.trim();
+  const passwordInput = document.getElementById('loginPassword').value.trim();
+
+  const userRecord = appState.members[selectedUser];
+  if (!userRecord) {
+    showToast("Invalid profile configuration state.", true);
+    return;
+  }
+
+  if (userRecord.email.toLowerCase() === emailInput.toLowerCase() && userRecord.password === passwordInput) {
+    currentLoggedInUserId = selectedUser;
+    sessionStorage.setItem('tc_user', selectedUser);
+    document.getElementById('loginOverlay').classList.add('hidden');
+    showToast(`Welcome back, ${userRecord.name}!`);
+    
+    // Auto session state check
+    if (currentLoggedInUserId === 'afad') {
+      isAdminSessionVerified = true; 
+    }
+
+    syncPersonalStatsWidget();
+    renderAllViews();
+  } else {
+    showToast("Incorrect email or password configured by admin!", true);
+  }
+});
+
+document.getElementById('adminQuickLoginBtn').addEventListener('click', () => {
+  promptAdminAuth();
+});
+
+window.updateMyStats = function() {
+  if (!currentLoggedInUserId || !appState) return;
+  const solved = parseInt(document.getElementById('mySolvedInput').value) || 0;
+  const streak = parseInt(document.getElementById('myStreakInput').value) || 0;
+
+  appState.members[currentLoggedInUserId].solved = solved;
+  appState.members[currentLoggedInUserId].streak = streak;
+
+  writeStateToDB();
+  showToast("Your statistics synced to team cloud!");
+};
+
+function syncPersonalStatsWidget() {
+  if (!currentLoggedInUserId || !appState) return;
+  const m = appState.members[currentLoggedInUserId];
+  document.getElementById('mySolvedInput').value = m.solved;
+  document.getElementById('myStreakInput').value = m.streak;
+
+  document.getElementById('navUserName').textContent = m.name;
+  document.getElementById('navUserRole').textContent = m.id === 'afad' ? 'Web Dev (Admin)' : m.specialization;
+  
+  const dot = document.getElementById('activeDot');
+  dot.className = `w-2.5 h-2.5 rounded-full dot-${m.id}`;
+}
+
+window.logout = function() {
+  sessionStorage.removeItem('tc_user');
+  currentLoggedInUserId = null;
+  isAdminSessionVerified = false;
+  document.getElementById('loginOverlay').classList.remove('hidden');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-dashboard').classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab')[0].classList.add('active');
+};
+
+window.showPage = function(name, btn) {
+  if (!currentLoggedInUserId) {
+    showToast("Authorization required. Please log in first.", true);
+    return;
+  }
+  
+  if (name === 'admin' && !isAdminSessionVerified) {
+    showToast("Admin authorization required.", true);
+    return;
+  }
+
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  
+  document.getElementById('page-'+name).classList.add('active');
+  if (btn) btn.classList.add('active');
+
+  if(name==='members') renderMembers();
+  if(name==='contests') renderContestView();
+  if(name==='roadmap') renderRoadmap();
+  if(name==='targets') { renderTasks(); renderMemberProgress(); }
+  if(name==='admin') renderAdminView();
+};
+
+window.tryOpenAdmin = function(btn) {
+  if (isAdminSessionVerified) {
+    showPage('admin', btn);
+  } else {
+    promptAdminAuth(btn);
+  }
+};
+
+function promptAdminAuth(targetBtn = null) {
+  document.getElementById('adminAuthModal').classList.remove('hidden');
+  document.getElementById('adminVerifyPassInput').focus();
+  window.adminTargetButtonRef = targetBtn;
+}
+
+document.getElementById('cancelAdminAuthBtn').addEventListener('click', () => {
+  document.getElementById('adminAuthModal').classList.add('hidden');
+});
+
+document.getElementById('submitAdminAuthBtn').addEventListener('click', () => {
+  verifyAdminCredentials();
+});
+
+document.getElementById('adminVerifyPassInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') verifyAdminCredentials();
+});
+
+function verifyAdminCredentials() {
+  const entered = document.getElementById('adminVerifyPassInput').value.trim();
+  if (entered === appState.adminPassword) {
+    isAdminSessionVerified = true;
+    document.getElementById('adminAuthModal').classList.add('hidden');
+    showToast("Access Granted. Admin Center unlocked.");
+    
+    const adminTabBtn = document.querySelectorAll('.nav-tab')[5]; 
+    showPage('admin', adminTabBtn);
+  } else {
+    showToast("Invalid admin verification code!", true);
+  }
+  document.getElementById('adminVerifyPassInput').value = '';
+}
+
+function renderAllViews() {
+  const liveDate = getCurrentFormattedDate();
+  document.getElementById('weekBadge').textContent = (appState.weekBadgeDate && appState.weekBadgeDate !== "Auto" && appState.weekBadgeDate.trim() !== "") ? appState.weekBadgeDate : liveDate;
+  document.getElementById('heroTopicText').textContent = appState.currentTopic;
+  document.getElementById('currentWeekNumText').textContent = appState.currentWeekNum;
+
+  renderLeaderboard();
+  renderAnnouncements();
+  
+  // Conditionally render categories button additions if Afad
+  const catBtn = document.getElementById('newCategoryTriggerBtn');
+  if (catBtn) {
+    if (currentLoggedInUserId === 'afad') {
+      catBtn.classList.remove('hidden');
+      catBtn.classList.add('inline-flex');
+    } else {
+      catBtn.classList.add('hidden');
+      catBtn.classList.remove('inline-flex');
+    }
+  }
+}
+
+function renderLeaderboard() {
+  const membersList = Object.values(appState.members);
+  const sorted = [...membersList].sort((a,b) => b.score - a.score || b.solved - a.solved);
+  
+  document.getElementById('leaderboard').innerHTML = sorted.map((m, i) => {
+    const icons = ['🥇','🥈','🥉'];
+    const rankClass = ['rank-1','rank-2','rank-3','rank-other'][Math.min(i,3)];
+    return `<div class="lb-row">
+      <div class="lb-rank ${rankClass}">${icons[i]||'#'+(i+1)}</div>
+      <div class="lb-avatar ${m.color}">${m.name[0]}</div>
+      <div class="lb-info">
+        <div class="lb-name"><span class="dot ${m.dot}"></span>${m.name}</div>
+        <div class="lb-sub">${m.id === 'afad' ? 'Web Dev (Admin)' : m.specialization}</div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div style="font-size:0.68rem;color:var(--muted)">Week progress ${m.weekProgress}%</div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${m.weekProgress}%"></div></div>
+      </div>
+      <div class="lb-right">
+        <div class="lb-score">${m.score} pts</div>
+        <div class="lb-streak font-mono">🔥 ${m.streak} day streak</div>
+      </div>
+    </div>`;
+  }).join('');
+  
+  document.getElementById('totalSolved').textContent = membersList.reduce((a,b)=>a+b.solved,0);
+  document.getElementById('topStreak').textContent = '🔥 '+Math.max(...membersList.map(m=>m.streak));
+}
+
+function renderAnnouncements() {
+  const container = document.getElementById('announcementsList');
+  if (!container) return;
+  container.innerHTML = appState.announcements.map(ann => `
+    <div class="announce-card">
+      <div class="announce-meta">
+        <span class="announce-from">${ann.from}</span>
+        <span class="announce-time">${ann.time}</span>
+      </div>
+      <div class="announce-text">${ann.text}</div>
+    </div>
+  `).join('');
+}
+
+function renderMembers() {
+  const el = document.getElementById('memberCards');
+  if(!el) return;
+  
+  const list = Object.values(appState.members);
+  el.innerHTML = list.map(m => `
+    <div class="member-card">
+      <div class="member-header">
+        <div class="member-avatar ${m.color}">${m.name[0]}</div>
+        <div>
+          <div class="member-name">${m.name}</div>
+          <div class="member-role">${m.id === 'afad' ? 'Web Dev (Admin)' : 'Focus: ' + m.specialization}</div>
+          <div class="text-[10px] text-slate-400 font-mono mt-0.5">${m.email}</div>
+        </div>
+      </div>
+      <div class="member-stats">
+        <div class="m-stat"><div class="m-stat-val" style="color:var(--accent)">${m.solved}</div><div class="m-stat-label">Solved</div></div>
+        <div class="m-stat"><div class="m-stat-val" style="color:var(--yellow)">🔥${m.streak}</div><div class="m-stat-label">Streak</div></div>
+        <div class="m-stat"><div class="m-stat-val" style="color:var(--accent2)">${m.score}</div><div class="m-stat-label">Points</div></div>
+        <div class="m-stat"><div class="m-stat-val" style="color:var(--green)">${m.weekProgress}%</div><div class="m-stat-label">This Week</div></div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:0.7rem;color:var(--muted);margin-bottom:5px">TOPICS COVERED</div>
+        ${m.topics.map(t=>`<span class="topic-tag">${t}</span>`).join('')}
+      </div>
+      <div>
+        <div style="font-size:0.7rem;color:var(--muted);margin-bottom:5px">BADGES</div>
+        ${m.badges.map(b=>`<span class="badge badge-gold">${b}</span>`).join('')}
+      </div>
+      <div class="progress-bar" style="margin-top:14px"><div class="progress-fill" style="width:${m.weekProgress}%"></div></div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:4px">Weekly Progress: ${m.weekProgress}%</div>
+    </div>`).join('');
+}
+
+function renderTasks() {
+  document.getElementById('weekTargetsTitle').textContent = `Week ${appState.currentWeekNum} Targets — ${appState.currentTopic}`;
+  
+  [['learn','learnTasks'],['practice','practiceTasks'],['contest','contestTasks'],['review','reviewTasks']].forEach(([phase,id])=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.innerHTML = appState.tasks[phase].map((t,i)=>{
+      const key=phase+'_'+i;
+      const done = appState.taskState ? appState.taskState[key] || false : false;
+      return `<div class="task-item">
+        <div class="task-check ${done?'done':''}" onclick="toggleTask('${key}')"></div>
+        <div style="flex:1">
+          <div class="task-text ${done?'done':''}">${t.text}</div>
+          <div class="task-who">${t.who}</div>
+        </div>
+      </div>`;
+    }).join('');
+  });
+}
+
+window.toggleTask = function(key) {
+  if (!appState.taskState) appState.taskState = {};
+  appState.taskState[key] = !appState.taskState[key];
+  writeStateToDB();
+  renderTasks();
+};
+
+function renderMemberProgress() {
+  const el=document.getElementById('memberProgress');
+  if(!el) return;
+  const list = Object.values(appState.members);
+  
+  el.innerHTML = list.map(m=>{
+    const isMe = m.id === currentLoggedInUserId;
+    return `
+    <div style="display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid #f1f5f9">
+      <div class="lb-avatar ${m.color}" style="width:34px;height:34px;font-size:0.82rem">${m.name[0]}</div>
+      <div style="min-width:65px;font-weight:600;font-size:0.9rem">${m.name}</div>
+      <div style="flex:1"><div class="progress-bar"><div class="progress-fill" style="width:${m.weekProgress}%"></div></div></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--accent);min-width:36px;text-align:right">${m.weekProgress}%</div>
+      <input type="range" min="0" max="100" value="${m.weekProgress}" 
+        oninput="updateProgress('${m.id}',this.value)" 
+        ${!isMe ? 'disabled' : ''} 
+        style="width:85px;accent-color:var(--accent);cursor:${isMe ? 'pointer' : 'not-allowed'}; opacity: ${isMe ? 1 : 0.6}">
+    </div>`
+  }).join('');
+}
+
+window.updateProgress = function(id, val) {
+  if (id !== currentLoggedInUserId) return; 
+  appState.members[id].weekProgress = parseInt(val);
+  writeStateToDB();
+  renderMemberProgress();
+};
+
+function renderContestView() {
+  const contestState = appState.contests;
+  const activeCat = contestState.activeCategory;
+  
+  // Set Active elements heading metadata
+  document.getElementById('activeCategoryHeading').textContent = activeCat;
+  document.getElementById('activeCategoryBadge').textContent = `${activeCat} Section`;
+
+  // Render Categories Row
+  const catContainer = document.getElementById('contestCategoriesContainer');
+  catContainer.innerHTML = contestState.categories.map(cat => {
+    const isActive = cat === activeCat;
+    return `
+      <button onclick="setContestActiveCategory('${cat}')" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+        isActive 
+          ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25' 
+          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+      }">
+        <span>📊</span> ${cat}
+      </button>
+    `;
+  }).join('');
+
+  // Render Table content rows
+  const contestBody = document.getElementById('contestBody');
+  const contestList = contestState.data[activeCat] || [];
+  
+  if (contestList.length === 0) {
+    contestBody.innerHTML = `<tr><td colspan="7" class="text-slate-400 py-8 text-center italic">No contest logs created in this category yet. Click Add Contest below to begin!</td></tr>`;
+  } else {
+    contestBody.innerHTML = contestList.map(c => {
+      return `
+        <tr>
+          <td class="font-bold text-slate-800">${c.name}</td>
+          <td class="text-slate-500 font-medium">${c.date}</td>
+          <td><span class="topic-tag">${c.topic}</span></td>
+          <td class="px-2">${renderContestScoreCell(c, 'afad')}</td>
+          <td class="px-2">${renderContestScoreCell(c, 'arafat')}</td>
+          <td class="px-2">${renderContestScoreCell(c, 'munna')}</td>
+          <td class="px-2">${renderContestScoreCell(c, 'taky')}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Populate Select drop downs
+  const userSelect = document.getElementById('userSubmitContestSelect');
+  const admSelect = document.getElementById('admScoreOverrideContestSelect');
+
+  const selectOptions = contestList.map(c => `<option value="${c.id}">${c.name} — ${c.topic}</option>`).join('');
+  
+  userSelect.innerHTML = selectOptions || `<option value="">No contests available</option>`;
+  admSelect.innerHTML = selectOptions || `<option value="">No contests available</option>`;
+
+  // Handle direct admin panels condition
+  const directPanel = document.getElementById('directAdminContestPanel');
+  if (currentLoggedInUserId === 'afad' || isAdminSessionVerified) {
+    directPanel.classList.remove('hidden');
+  } else {
+    directPanel.classList.add('hidden');
+  }
+
+  renderContestLeaderboard();
+}
+
+function renderContestScoreCell(contest, userId) {
+  const adminVal = contest.adminOverrides?.[userId];
+  const userVal = contest.userSubmissions?.[userId];
+
+  if (adminVal !== undefined && adminVal !== null) {
+    return `
+      <div class="flex flex-col items-center">
+        <span class="text-indigo-600 font-bold font-mono text-sm">${adminVal}/10</span>
+        <span class="text-[8px] tracking-wide font-bold uppercase text-indigo-400 bg-indigo-50 px-1 py-0.5 rounded mt-0.5">Admin Set</span>
+      </div>
+    `;
+  } else if (userVal !== undefined && userVal !== null) {
+    return `
+      <div class="flex flex-col items-center">
+        <span class="text-slate-700 font-semibold font-mono text-sm">${userVal}/10</span>
+        <span class="text-[8px] tracking-wide font-semibold uppercase text-emerald-500 bg-emerald-50 px-1 py-0.5 rounded mt-0.5">Self-Sub</span>
+      </div>
+    `;
+  } else {
+    return `<span class="text-slate-300 italic text-xs">Waiting</span>`;
+  }
+}
+
+// MULTI-CATEGORY TRIGGER CODES
+window.setContestActiveCategory = function(cat) {
+  appState.contests.activeCategory = cat;
+  renderContestView();
+};
+
+window.openNewCategoryModal = function() {
+  if (currentLoggedInUserId !== 'afad') {
+    showToast("Privilege limit. Only Afad can configure new categories.", true);
+    return;
+  }
+  document.getElementById('newCategoryModal').classList.remove('hidden');
+  document.getElementById('newCategoryNameInput').focus();
+};
+
+document.getElementById('cancelCategoryModalBtn').addEventListener('click', () => {
+  document.getElementById('newCategoryModal').classList.add('hidden');
+});
+
+document.getElementById('submitCategoryModalBtn').addEventListener('click', () => {
+  const name = document.getElementById('newCategoryNameInput').value.trim();
+  if (!name) {
+    showToast("Please enter a valid unique name!", true);
+    return;
+  }
+
+  if (appState.contests.categories.includes(name)) {
+    showToast("This category already exists!", true);
+    return;
+  }
+
+  // Save new categories
+  appState.contests.categories.push(name);
+  appState.contests.data[name] = [];
+  appState.contests.activeCategory = name;
+
+  document.getElementById('newCategoryModal').classList.add('hidden');
+  document.getElementById('newCategoryNameInput').value = '';
+  
+  writeStateToDB();
+  showToast(`Successfully created ${name} contest section!`);
+  renderContestView();
+});
+
+// SELF SUBMIT MEMBER SCORE
+window.submitUserContestScore = function() {
+  const contestId = document.getElementById('userSubmitContestSelect').value;
+  const scoreVal = parseFloat(document.getElementById('userSubmittedScoreInput').value);
+
+  if (!contestId) {
+    showToast("Create a contest first before logging scores!", true);
+    return;
+  }
+
+  if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > 10) {
+    showToast("Score must be a number between 0 and 10!", true);
+    return;
+  }
+
+  const activeCat = appState.contests.activeCategory;
+  const contestList = appState.contests.data[activeCat] || [];
+  const contest = contestList.find(c => c.id === contestId);
+
+  if (!contest) {
+    showToast("Selected contest record was not found.", true);
+    return;
+  }
+
+  if (!contest.userSubmissions) contest.userSubmissions = {};
+  contest.userSubmissions[currentLoggedInUserId] = scoreVal;
+
+  writeStateToDB();
+  showToast("Your contest score saved. Rankings refreshed!");
+  renderContestView();
+  
+  document.getElementById('userSubmittedScoreInput').value = '';
+};
+
+// ADMIN PRIVILEGED CONTEST METHODS
+window.addNewContestToCategory = function() {
+  const name = document.getElementById('admNewContestName').value.trim();
+  const date = document.getElementById('admNewContestDate').value.trim();
+  const topic = document.getElementById('admNewContestTopic').value.trim();
+
+  if (!name || !date || !topic) {
+    showToast("Please complete all fields (Name, Date, Topic)!", true);
+    return;
+  }
+
+  const activeCat = appState.contests.activeCategory;
+  const contestObj = {
+    id: `contest_${Date.now()}`,
+    name: name,
+    date: date,
+    topic: topic,
+    userSubmissions: { afad: null, arafat: null, munna: null, taky: null },
+    adminOverrides: { afad: null, arafat: null, munna: null, taky: null }
+  };
+
+  appState.contests.data[activeCat].push(contestObj);
+  
+  writeStateToDB();
+  showToast(`Added ${name} to ${activeCat}!`);
+  renderContestView();
+
+  document.getElementById('admNewContestName').value = '';
+  document.getElementById('admNewContestDate').value = '';
+  document.getElementById('admNewContestTopic').value = '';
+};
+
+window.overrideMemberScore = function() {
+  const contestId = document.getElementById('admScoreOverrideContestSelect').value;
+  const userId = document.getElementById('admScoreOverrideUserSelect').value;
+  const scoreVal = parseFloat(document.getElementById('admScoreOverrideVal').value);
+
+  if (!contestId) {
+    showToast("No active contest available!", true);
+    return;
+  }
+
+  if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > 10) {
+    showToast("Ensure overridden score is between 0 and 10!", true);
+    return;
+  }
+
+  const activeCat = appState.contests.activeCategory;
+  const contest = appState.contests.data[activeCat].find(c => c.id === contestId);
+
+  if (!contest) {
+    showToast("Target contest missing.", true);
+    return;
+  }
+
+  if (!contest.adminOverrides) contest.adminOverrides = {};
+  contest.adminOverrides[userId] = scoreVal;
+
+  writeStateToDB();
+  showToast(`Administrative priority score overridden for ${userId}!`);
+  renderContestView();
+
+  document.getElementById('admScoreOverrideVal').value = '';
+};
+
+window.clearOverrideScore = function() {
+  const contestId = document.getElementById('admScoreOverrideContestSelect').value;
+  const userId = document.getElementById('admScoreOverrideUserSelect').value;
+
+  if (!contestId) {
+    showToast("No active contest!", true);
+    return;
+  }
+
+  const activeCat = appState.contests.activeCategory;
+  const contest = appState.contests.data[activeCat].find(c => c.id === contestId);
+
+  if (contest && contest.adminOverrides) {
+    contest.adminOverrides[userId] = null;
+    writeStateToDB();
+    showToast(`Admin override cleared for ${userId}. Display falling back to self-submission.`);
+    renderContestView();
+  }
+};
+
+function renderContestLeaderboard() {
+  const el = document.getElementById('contestLeaderboard');
+  if(!el) return;
+  
+  const sorted = Object.values(appState.members).sort((a,b) => b.score - a.score);
+  const icons = ['🥇','🥈','🥉'];
+  el.innerHTML = sorted.map((m,i)=>`
+    <div class="lb-row">
+      <div class="lb-rank ${['rank-1','rank-2','rank-3','rank-other'][Math.min(i,3)]}">${icons[i]||'#'+(i+1)}</div>
+      <div class="lb-avatar ${m.color}">${m.name[0]}</div>
+      <div class="lb-info">
+        <div class="lb-name">${m.name}</div>
+        <div class="lb-sub">Global rating points: ${m.score} pts</div>
+      </div>
+      <div class="lb-right">
+        <div class="lb-score text-blue-600 font-mono">${m.solved} Solved</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderRoadmap() {
+  const el = document.getElementById('roadmapContent');
+  if(!el) return;
+  el.innerHTML = appState.roadmap.map(y=>`
+    <div class="roadmap-year">
+      <div class="year-header"><span class="year-num">${y.year}</span><span class="year-title">${y.title}</span></div>
+      <div class="roadmap-items">${y.items.map(item=>`
+        <div class="roadmap-item ${item.done?'done-item':''} ${item.current?'current-item':''}">
+          ${item.done?'✅':item.current?'▶️':'⬜'} ${item.text}
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
+  const t=document.getElementById('upcomingTopics');
+  if(t) t.innerHTML=appState.upcomingTopics.map(x=>`<div class="roadmap-item">${x}</div>`).join('');
+}
+
+function renderAdminView() {
+  document.getElementById('adminTopicInput').value = appState.currentTopic;
+  document.getElementById('adminWeekBadgeInput').value = appState.weekBadgeDate;
+  document.getElementById('adminWeekNumInput').value = appState.currentWeekNum;
+
+  const container = document.getElementById('adminUserPassRows');
+  const membersList = Object.values(appState.members);
+
+  container.innerHTML = membersList.map(m => `
+    <div class="p-3 bg-indigo-50/50 border border-indigo-100 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="w-3 h-3 rounded-full dot-${m.id}"></span>
+        <div>
+          <span class="font-bold text-xs text-indigo-950">${m.name}</span>
+          <span class="text-[10px] text-slate-400 block">${m.email || 'No email registered'}</span>
+        </div>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-2">
+        <input type="email" id="admEmail-${m.id}" value="${m.email || ''}" placeholder="E-mail" class="px-2.5 py-1.5 border rounded-lg text-xs font-medium outline-none bg-white focus:ring-1 focus:ring-indigo-500">
+        <input type="text" id="admPass-${m.id}" value="${m.password || ''}" placeholder="Password" class="px-2.5 py-1.5 border rounded-lg text-xs font-mono outline-none bg-white focus:ring-1 focus:ring-indigo-500">
+      </div>
+    </div>
+  `).join('');
+}
+
+window.saveAdminCredentials = function() {
+  const ids = ['afad', 'arafat', 'munna', 'taky'];
+  let err = false;
+  
+  ids.forEach(id => {
+    const email = document.getElementById(`admEmail-${id}`).value.trim();
+    const pass = document.getElementById(`admPass-${id}`).value.trim();
+    
+    if(!email || !pass) {
+      err = true;
+    } else {
+      appState.members[id].email = email;
+      appState.members[id].password = pass;
+    }
+  });
+
+  if (err) {
+    showToast("Email and passwords cannot be empty strings!", true);
+    return;
+  }
+
+  appState.currentTopic = document.getElementById('adminTopicInput').value.trim();
+  appState.weekBadgeDate = document.getElementById('adminWeekBadgeInput').value.trim();
+  appState.currentWeekNum = parseInt(document.getElementById('adminWeekNumInput').value) || 1;
+
+  writeStateToDB();
+  showToast("Admin Panel changes applied successfully across all devices!");
+  renderAllViews();
+  renderAdminView();
+};
+
+window.postAdminAnnouncement = function() {
+  const txt = document.getElementById('adminAnnounceText').value.trim();
+  if(!txt) return;
+  appState.announcements.unshift({
+    from: "📢 Admin (Afad)",
+    text: txt,
+    time: "Just Now"
+  });
+  document.getElementById('adminAnnounceText').value = '';
+  writeStateToDB();
+  showToast("Broadcasting announcement to all active dashboards!");
+  renderAllViews();
+};
+
+window.triggerResetSystem = function() {
+  const confirmation = prompt("To reset everything, write: CONFIRM RESET");
+  if (confirmation === "CONFIRM RESET") {
+    appState = JSON.parse(JSON.stringify(defaultState));
+    writeStateToDB();
+    showToast("Entire cloud model initialized to defaults. Running Setup.");
+    setTimeout(() => window.location.reload(), 1000);
+  } else {
+    showToast("Operation Aborted.", true);
+  }
+};
+
+window.onload = function() {
+  initializeAppPortal();
+};
+</script>
+</body>
+</html>
