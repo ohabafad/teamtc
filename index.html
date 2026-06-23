@@ -278,12 +278,71 @@
     .progress-bar-wrap { display: none; }
   }
 </style>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+  import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+
+  // আপনার দেওয়া ফায়ারবেস কনফিগারেশন কীসমূহ
+  const firebaseConfig = {
+    apiKey: "AIzaSyBeDc-RSfP330E0ULDDC05fqJHCn2ZzitI",
+    authDomain: "teamtc.firebaseapp.com",
+    databaseURL: "https://teamtc-default-rtdb.firebaseio.com",
+    projectId: "teamtc",
+    storageBucket: "teamtc.firebasestorage.app",
+    messagingSenderId: "613788760029",
+    appId: "1:613788760029:web:cdb1b496a4f6fb9cd96834"
+  };
+
+  // Firebase ইনিশিয়ালাইজেশন
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // গ্লোবাল উইন্ডো ফাংশন তৈরি করা যাতে পুরো স্ক্রিপ্ট থেকে ডাটাবেসে রাইট করা যায়
+  window.writeStateToDB = function() {
+    if (window.appState) {
+      set(ref(db, 'appState'), window.appState)
+        .catch(error => console.error("Database sync failed:", error));
+    }
+  };
+
+  // রিয়েলটাইম লিসেনার: ডাটাবেসে যেকোনো পরিবর্তন হলে সাথে সাথে সবার অ্যাপ অটো-আপডেট হবে
+  const appStateRef = ref(db, 'appState');
+  onValue(appStateRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      window.appState = data;
+      // একটি ছোট ইন্ডিকেটর লাইভ স্টেট বোঝানোর জন্য (সবুজ রঙ)
+      const dot = document.getElementById('activeDot');
+      if(dot) { dot.style.backgroundColor = '#059669'; }
+      
+      // অ্যাপ ইন্টারফেস রেন্ডার করা
+      if (typeof window.renderAllViews === "function") {
+        window.renderAllViews();
+      }
+      if (typeof window.renderAdminView === "function" && window.isAdminSessionVerified) {
+        window.renderAdminView();
+      }
+    } else {
+      // যদি ডাটাবেস সম্পূর্ণ খালি থাকে, তবে ডিফল্ট স্টেট দিয়ে ইনিশিয়ালাইজ করবে
+      if (window.defaultState && !window.appState?.initialized) {
+        window.appState = JSON.parse(JSON.stringify(window.defaultState));
+        window.writeStateToDB();
+      }
+    }
+  }, (error) => {
+    console.error("Firebase connection error:", error);
+    // অফলাইন ইন্ডিকেটর (ধূসর রঙ)
+    const dot = document.getElementById('activeDot');
+    if(dot) { dot.style.backgroundColor = '#94a3b8'; }
+  });
+</script>
 </head>
 <body class="bg-slate-50 text-slate-800">
 
 <div id="toastContainer" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2"></div>
 
-<!-- INITIALIZATION/SETUP MODAL -->
+
 <div id="setupModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[1000] flex items-center justify-center p-4 hidden">
   <div class="glass-card w-full max-w-xl rounded-2xl p-8 max-h-[90vh] overflow-y-auto">
     <div class="text-center mb-6">
@@ -294,14 +353,13 @@
     
     <div class="space-y-4">
       <div class="p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
-        <label class="block text-xs font-bold uppercase tracking-wider text-indigo-700 mb-1">Set Secure Admin Password (for Afad)</label>
-        <p class="text-xs text-slate-500 mb-2">Used to access the Admin Panel and reset passwords anytime.</p>
-        <input type="password" id="setupAdminPassword" placeholder="e.g. secretAdmin123" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-mono">
+        <label class="block text-xs font-bold uppercase tracking-wider text-indigo-700 mb-1">Secure Admin Password (for Afad)</label>
+        <p class="text-xs text-slate-500 mb-2">Configure security keyword to access the Admin Panel. (Fixed default: <span class="font-mono font-bold text-slate-700">spider123</span>)</p>
+        <input type="password" id="setupAdminPassword" value="spider123" placeholder="spider123" class="w-full px-4 py-2 border rounded-lg bg-slate-100 cursor-not-allowed outline-none text-sm font-mono text-slate-500" readonly>
       </div>
 
       <h3 class="font-bold text-slate-700 text-sm border-b pb-1">Register Members Logins:</h3>
       
-      <!-- Afad Registration row -->
       <div class="p-3 bg-white border rounded-xl space-y-2">
         <div class="flex items-center gap-2"><span class="dot dot-afad"></span><span class="font-bold text-sm text-slate-700">Afad (Me / Admin)</span></div>
         <div class="grid grid-cols-2 gap-2">
@@ -310,7 +368,6 @@
         </div>
       </div>
 
-      <!-- Arafat Registration row -->
       <div class="p-3 bg-white border rounded-xl space-y-2">
         <div class="flex items-center gap-2"><span class="dot dot-arafat"></span><span class="font-bold text-sm text-slate-700">Arafat</span></div>
         <div class="grid grid-cols-2 gap-2">
@@ -319,7 +376,6 @@
         </div>
       </div>
 
-      <!-- Munna Registration row -->
       <div class="p-3 bg-white border rounded-xl space-y-2">
         <div class="flex items-center gap-2"><span class="dot dot-munna"></span><span class="font-bold text-sm text-slate-700">Munna</span></div>
         <div class="grid grid-cols-2 gap-2">
@@ -328,7 +384,6 @@
         </div>
       </div>
 
-      <!-- Taky Registration row -->
       <div class="p-3 bg-white border rounded-xl space-y-2">
         <div class="flex items-center gap-2"><span class="dot dot-taky"></span><span class="font-bold text-sm text-slate-700">Taky</span></div>
         <div class="grid grid-cols-2 gap-2">
@@ -344,13 +399,13 @@
   </div>
 </div>
 
-<!-- SIGN IN OVERLAY -->
+
 <div id="loginOverlay" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[900] flex items-center justify-center p-4">
   <div class="glass-card w-full max-w-md rounded-2xl p-8 shadow-2xl relative">
     <div class="text-center mb-6">
       <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 font-black text-2xl tracking-widest mb-2">TC</div>
-      <h2 class="text-2xl font-bold text-slate-800">Team TC Tracker Sign In</h2>
-      <p class="text-xs text-slate-500 mt-1">Please select your profile and enter your credentials.</p>
+      <h2 class="text-2xl font-bold text-slate-800">Team TC Tracker</h2>
+      <p id="loginSubtitle" class="text-xs text-slate-500 mt-1">Please select your profile and enter your credentials.</p>
     </div>
 
     <div class="space-y-4">
@@ -364,48 +419,57 @@
         </select>
       </div>
 
-      <div>
+      <div id="loginEmailContainer">
         <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Email Address</label>
         <input type="email" id="loginEmail" placeholder="Enter your email" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm">
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Passphrase / Password</label>
+        <label id="loginPasswordLabel" class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Passphrase / Password</label>
         <input type="password" id="loginPassword" placeholder="Enter password" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono">
       </div>
 
       <button id="loginSubmitBtn" class="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold transition shadow-lg shadow-blue-500/25 text-sm mt-2">
         Verify Credentials & Enter Tracker
       </button>
-
-      <div class="text-center pt-2">
-        <button id="adminQuickLoginBtn" class="text-xs text-slate-500 hover:text-indigo-600 underline font-medium">
-          Access Admin Panel Directly
-        </button>
-      </div>
+      <div id="loginWarningMsg" class="text-xs text-red-500 text-center hidden font-bold mt-2"></div>
     </div>
   </div>
 </div>
 
-<!-- ADMIN VERIFICATION PROMPT -->
+
 <div id="adminAuthModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1100] flex items-center justify-center p-4 hidden">
   <div class="glass-card w-full max-w-sm rounded-xl p-6 shadow-2xl">
     <div class="text-center mb-4">
       <span class="text-3xl">🛡️</span>
       <h3 class="text-lg font-bold text-indigo-950 mt-1">Admin Panel Access</h3>
-      <p class="text-xs text-slate-500">Only Afad can access this panel. Enter the unique Admin Password.</p>
+      <p class="text-[11px] text-slate-500 mt-1">Only Afad can access this panel. Enter the Master Admin Password. <br>(Default is: <b class="text-slate-800">spider123</b>)</p>
     </div>
     <div class="space-y-4">
-      <input type="password" id="adminVerifyPassInput" placeholder="Admin password" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-mono text-center">
+      <input type="password" id="adminVerifyPassInput" placeholder="Master Admin Password" class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-mono text-center">
       <div class="flex gap-2">
         <button id="cancelAdminAuthBtn" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs transition">Cancel</button>
-        <button id="submitAdminAuthBtn" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-xs transition">Verify Admin</button>
+        <button id="submitAdminAuthBtn" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-xs transition">Verify Access</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- NEW CONTEST CATEGORY DYNAMIC FORM MODAL -->
+<div id="confirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1200] flex items-center justify-center p-4 hidden">
+  <div class="glass-card w-full max-w-sm rounded-xl p-6 shadow-2xl">
+    <div class="text-center mb-4">
+      <span class="text-3xl">⚠️</span>
+      <h3 id="confirmModalTitle" class="text-lg font-bold text-red-600 mt-1">Danger Action</h3>
+      <p id="confirmModalMsg" class="text-xs text-slate-500 mt-2">Are you sure you want to proceed?</p>
+      <input type="text" id="confirmModalInput" placeholder="Type confirmation keyword" class="w-full px-4 py-2 mt-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-red-500 outline-none text-sm hidden font-mono text-center">
+    </div>
+    <div class="flex gap-2">
+      <button id="confirmCancelBtn" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-bold text-xs transition">Cancel</button>
+      <button id="confirmProceedBtn" class="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs transition">Confirm</button>
+    </div>
+  </div>
+</div>
+
 <div id="newCategoryModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1100] flex items-center justify-center p-4 hidden">
   <div class="glass-card w-full max-w-sm rounded-xl p-6 shadow-2xl">
     <div class="text-center mb-4">
@@ -423,7 +487,6 @@
   </div>
 </div>
 
-<!-- MAIN WORKSPACE NAVIGATION -->
 <nav>
   <div class="logo">TEAM<span> TC</span></div>
   <div class="nav-tabs">
@@ -445,14 +508,13 @@
     <button onclick="logout()" class="px-3 py-1.5 bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 rounded-lg text-xs font-bold transition border border-slate-200 flex items-center gap-1">
       Logout
     </button>
-    <div class="week-badge" id="weekBadge">Jun 19</div>
+    <div class="week-badge" id="weekBadge">Loading...</div>
   </div>
 </nav>
 
-<!-- DASHBOARD PAGE -->
+
 <div class="page active" id="page-dashboard">
   <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
-    <!-- HERO -->
     <div class="hero lg:col-span-3">
       <div class="hero-top">
         <div>
@@ -461,7 +523,7 @@
         </div>
         <div class="hero-topic">
           <div class="hero-topic-label">Current Topic</div>
-          <div id="heroTopicText" class="hero-topic-val">C Language — Arrays</div>
+          <div id="heroTopicText" class="hero-topic-val">...</div>
         </div>
       </div>
       <div class="cycle-info">
@@ -472,7 +534,6 @@
       </div>
     </div>
 
-    <!-- PERSONAL HUB CARD -->
     <div class="card border-blue-100 bg-gradient-to-b from-blue-50/50 to-indigo-50/50 flex flex-col justify-between">
       <div>
         <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">My Daily Hub</h4>
@@ -509,15 +570,15 @@
   <div id="announcementsList" class="space-y-2"></div>
 </div>
 
-<!-- MEMBERS PAGE -->
+
 <div class="page" id="page-members">
   <div class="section-title">All Members</div>
   <div class="grid-2" id="memberCards"></div>
 </div>
 
-<!-- TARGETS PAGE -->
+
 <div class="page" id="page-targets">
-  <div class="section-title" id="weekTargetsTitle">Week 1 Targets — C Arrays</div>
+  <div class="section-title" id="weekTargetsTitle">Week Targets</div>
   <div class="grid-2">
     <div class="target-card">
       <div class="target-header"><div class="target-title">📖 Learning Phase (Day 1–3)</div></div>
@@ -528,6 +589,7 @@
       <div id="practiceTasks"></div>
     </div>
   </div>
+  
   <div style="margin-top:14px;" class="grid-2">
     <div class="target-card">
       <div class="target-header"><div class="target-title">⚔️ Contest Day (Day 6)</div></div>
@@ -538,29 +600,24 @@
       <div id="reviewTasks"></div>
     </div>
   </div>
+
   <div class="section-title" style="margin-top:26px;">Member Progress This Week</div>
   <div class="card"><div id="memberProgress"></div></div>
 </div>
 
-<!-- CONTESTS PAGE (MULTIPLE CATEGORIES & INTERACTION FORMS) -->
+
 <div class="page" id="page-contests">
   <div class="section-title">Contest Management & Categorization</div>
-  
-  <!-- Categories Row -->
   <div class="flex flex-wrap items-center gap-2 mb-6">
-    <div id="contestCategoriesContainer" class="flex flex-wrap gap-2">
-      <!-- Dynamic category tabs -->
-    </div>
-    <!-- New section trigger available only to Afad (rendered dynamically) -->
+    <div id="contestCategoriesContainer" class="flex flex-wrap gap-2"></div>
     <button id="newCategoryTriggerBtn" class="px-4 py-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 transition text-xs font-bold hidden items-center gap-1.5" onclick="openNewCategoryModal()">
       <span>➕</span> Create New Section
     </button>
   </div>
 
-  <!-- Contest Table Container -->
   <div class="card overflow-x-auto mb-6">
     <div class="flex justify-between items-center mb-4">
-      <h3 class="font-bold text-lg text-slate-800" id="activeCategoryHeading">Group Contest</h3>
+      <h3 class="font-bold text-lg text-slate-800" id="activeCategoryHeading">...</h3>
       <span class="text-xs px-2.5 py-1 bg-blue-100 text-blue-700 font-bold rounded-full font-mono" id="activeCategoryBadge">Active Row</span>
     </div>
     <table class="contest-table min-w-[700px]">
@@ -575,1145 +632,698 @@
           <th>Taky</th>
         </tr>
       </thead>
-      <tbody id="contestBody">
-        <!-- Loaded dynamically based on category selection -->
-      </tbody>
+      <tbody id="contestBody"></tbody>
     </table>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-    <!-- MEMBER SCORE SUBMISSION BOX -->
-    <div class="card border border-slate-200 bg-white">
-      <h4 class="font-bold text-sm text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-1.5 text-blue-600">
-        📝 Report Your Contest Score
-      </h4>
-      <p class="text-xs text-slate-500 mb-4">Submit your authentic score out of 10. Admin override values take absolute precedence.</p>
-      
-      <div class="space-y-3">
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Select Contest</label>
-          <select id="userSubmitContestSelect" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 bg-white">
-            <!-- Dynamic Contests Options -->
-          </select>
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Your Score (Out of 10)</label>
-          <input type="number" id="userSubmittedScoreInput" min="0" max="10" step="0.5" placeholder="e.g. 8.5" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500">
-        </div>
-        <button onclick="submitUserContestScore()" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition">
-          Save Score Record
-        </button>
+    <div class="card border border-slate-200 shadow-sm hidden" id="adminContestActionBox">
+      <h4 class="font-bold text-sm text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1">🛠️ Append Row to <span id="actionBoxCategoryName" class="text-blue-600 normal-case ml-1">...</span></h4>
+      <div class="grid grid-cols-3 gap-2">
+        <input type="text" id="cInputName" placeholder="Contest Name" class="px-3 py-2 border rounded text-xs outline-none focus:border-blue-500">
+        <input type="text" id="cInputDate" placeholder="Date (e.g., Oct 24)" class="px-3 py-2 border rounded text-xs outline-none focus:border-blue-500">
+        <input type="text" id="cInputTopic" placeholder="Topic Context" class="px-3 py-2 border rounded text-xs outline-none focus:border-blue-500">
       </div>
+      <button onclick="addContestRow()" class="w-full mt-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-sm">
+        Add Record Entry
+      </button>
     </div>
 
-    <!-- DYNAMIC PRIVILEGED ADMIN CONTEST ACTION BOARD (Directly on view) -->
-    <div id="directAdminContestPanel" class="card border border-indigo-200 bg-gradient-to-br from-slate-50 to-indigo-50 hidden">
-      <div class="flex justify-between items-center border-b pb-2 mb-3">
-        <h4 class="font-bold text-sm text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
-          🛡️ Admin Contest Control Center
-        </h4>
-        <span class="text-[9px] px-1.5 py-0.5 bg-indigo-600 text-white font-bold rounded uppercase">Afad's Console</span>
-      </div>
-
-      <div class="space-y-4">
-        <!-- New contest inside selected Category -->
-        <div>
-          <h5 class="text-xs font-bold text-slate-700 mb-2">➕ Add New Contest to this Section</h5>
-          <div class="grid grid-cols-2 gap-2 mb-2">
-            <input type="text" id="admNewContestName" placeholder="Contest #2" class="px-2.5 py-1.5 border rounded-lg text-xs bg-white">
-            <input type="text" id="admNewContestDate" placeholder="Week 1 - Day 6" class="px-2.5 py-1.5 border rounded-lg text-xs bg-white">
-          </div>
-          <div class="flex gap-2">
-            <input type="text" id="admNewContestTopic" placeholder="Topic: Functions & Pointers" class="flex-1 px-2.5 py-1.5 border rounded-lg text-xs bg-white">
-            <button onclick="addNewContestToCategory()" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition">
-              Create
-            </button>
-          </div>
-        </div>
-
-        <!-- Override any score directly -->
-        <div class="border-t pt-3">
-          <h5 class="text-xs font-bold text-slate-700 mb-2">✏️ Override / Set Member Scores</h5>
-          <div class="grid grid-cols-3 gap-2 mb-2">
-            <div>
-              <label class="block text-[9px] text-slate-400 mb-0.5">Contest</label>
-              <select id="admScoreOverrideContestSelect" class="w-full px-2 py-1.5 border rounded text-xs bg-white">
-                <!-- Dynamic choices -->
-              </select>
-            </div>
-            <div>
-              <label class="block text-[9px] text-slate-400 mb-0.5">Member</label>
-              <select id="admScoreOverrideUserSelect" class="w-full px-2 py-1.5 border rounded text-xs bg-white">
-                <option value="afad">Afad</option>
-                <option value="arafat">Arafat</option>
-                <option value="munna">Munna</option>
-                <option value="taky">Taky</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-[9px] text-slate-400 mb-0.5">Score (Max 10)</label>
-              <input type="number" id="admScoreOverrideVal" min="0" max="10" step="0.5" placeholder="Score" class="w-full px-2 py-1.5 border rounded text-xs bg-white">
-            </div>
-          </div>
-          <div class="flex gap-2">
-            <button onclick="overrideMemberScore()" class="w-full py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-bold transition">
-              Apply Overridden Score
-            </button>
-            <button onclick="clearOverrideScore()" class="py-1.5 px-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-xs font-medium transition">
-              Reset Override
-            </button>
-          </div>
-        </div>
-      </div>
+    <div class="card border border-red-100 bg-red-50/20 hidden" id="adminCategoryDeleteBox">
+      <h4 class="font-bold text-sm text-red-700 uppercase tracking-wider mb-2">⚠️ Section Lifecycle Control</h4>
+      <p class="text-[11px] text-slate-500 mb-3">Deleting a category instantly drops its database structure entirely across all connected synchronization channels.</p>
+      <button onclick="triggerDeleteCategory()" class="px-4 py-2 border border-red-200 hover:bg-red-50 text-red-600 rounded-lg text-xs font-bold transition flex items-center gap-1">
+        🗑️ Purge Active Category Section
+      </button>
     </div>
   </div>
-
-  <div class="section-title">All-Time Contest Rankings</div>
-  <div class="leaderboard" id="contestLeaderboard"></div>
 </div>
 
-<!-- ROADMAP PAGE -->
+
 <div class="page" id="page-roadmap">
-  <div class="section-title">4-Year CSE Roadmap</div>
-  <div id="roadmapContent"></div>
-  <div class="section-title">Upcoming Topics</div>
-  <div class="card"><div style="display:flex;flex-wrap:wrap;gap:8px;" id="upcomingTopics"></div></div>
+  <div class="section-title">Long-term Educational Path Architecture</div>
+  <div id="roadmapContainer"></div>
+
+  <div class="card mt-4 border border-indigo-100 bg-indigo-50/20 hidden" id="adminRoadmapActionBox">
+    <h4 class="font-bold text-sm text-indigo-900 mb-2">🗺️ Append New Nodes onto Timeline</h4>
+    <div class="flex flex-wrap gap-2">
+      <input type="text" id="roadmapYearInput" placeholder="Phase (e.g. Year 1 / Term 2)" class="px-3 py-2 border rounded text-xs outline-none focus:border-indigo-500 w-44">
+      <input type="text" id="roadmapNodeInput" placeholder="Skill node description (e.g., Graph Algorithms)" class="flex-1 px-3 py-2 border rounded text-xs outline-none focus:border-indigo-500 min-w-[200px]">
+      <button onclick="addRoadmapNode()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition">
+        Append Node
+      </button>
+    </div>
+  </div>
 </div>
 
-<!-- ADMIN CONTROL PANEL PAGE -->
+
 <div class="page" id="page-admin">
-  <div class="hero bg-gradient-to-r from-slate-900 to-indigo-950 p-6">
-    <div class="flex justify-between items-center">
+  <div class="hero bg-gradient-to-r from-indigo-900 to-slate-900 border-b-4 border-indigo-500 mb-6">
+    <div class="hero-top">
       <div>
-        <h1 class="text-xl font-bold flex items-center gap-2">🛡️ Team TC — Controller Center</h1>
-        <p class="text-xs text-indigo-200 mt-1">Hello, Afad. Reset member passwords, change topic schedules, edit announcements, and manage team details.</p>
+        <h1 class="text-xl">System Management <span>Console 🛡️</span></h1>
+        <p class="text-xs text-indigo-200 mt-1">Global administrative synchronization deck. Controlled by Afad.</p>
       </div>
-      <div class="px-3 py-1 bg-red-600 text-[10px] uppercase font-bold tracking-wider rounded-full">Secure Session</div>
+      <span class="text-xs bg-indigo-500/30 text-indigo-300 font-mono px-3 py-1 rounded border border-indigo-500/50">Root Session</span>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-    <!-- MEMBER PASSWORD / LOGIN MANAGER -->
-    <div class="card border border-indigo-100 flex flex-col justify-between">
-      <div>
-        <h3 class="font-bold text-slate-800 text-sm border-b pb-2 mb-4 flex items-center gap-1.5 text-indigo-600">
-          🔐 Manage Member Credentials (Set & Reset Passwords)
-        </h3>
-        <div class="space-y-3">
-          <div id="adminUserPassRows" class="space-y-3">
-            <!-- Dynamic member control rows mapped here -->
-          </div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="card lg:col-span-2 space-y-4">
+      <h3 class="font-bold text-slate-800 text-base border-b pb-1">System Core Configurations</h3>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 mb-1">Global Topic Context</label>
+          <input type="text" id="adminTopicInput" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:border-indigo-500 font-medium">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 mb-1">Week Badge Timeline</label>
+          <input type="text" id="adminWeekBadgeInput" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:border-indigo-500 font-medium">
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-500 mb-1">Current Iteration Week</label>
+          <input type="number" id="adminWeekNumInput" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:border-indigo-500 font-mono">
         </div>
       </div>
-      <div class="pt-4 border-t mt-4 flex justify-between items-center">
-        <p class="text-[10px] text-slate-400">Remember to notify members of updated credentials.</p>
-        <button onclick="saveAdminCredentials()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition">
-          Update Credentials
+
+      <h4 class="font-bold text-slate-700 text-xs mt-4">Revise Registered Access Keys:</h4>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="adminMemberKeysContainer"></div>
+
+      <button onclick="applyAdminSettingsChanges()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition shadow">
+        Broadcast Parameters Across Connected Engines
+      </button>
+    </div>
+
+    <div class="space-y-4">
+      <div class="card">
+        <h3 class="font-bold text-slate-800 text-sm mb-2">📢 Dispatch Urgent Announcement</h3>
+        <textarea id="adminAnnounceText" rows="3" placeholder="Broadcast notification to active sessions..." class="w-full p-3 border rounded-lg text-xs outline-none focus:border-indigo-500 resize-none"></textarea>
+        <button onclick="postAdminAnnouncement()" class="w-full mt-2 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition">
+          Transmit Broadcast Signal
         </button>
       </div>
-    </div>
 
-    <!-- ANNOUNCEMENT AND GLOBAL TOPIC CONFIG -->
-    <div class="card border border-indigo-100 space-y-4">
-      <h3 class="font-bold text-slate-800 text-sm border-b pb-2 flex items-center gap-1.5 text-indigo-600">
-        📢 Post Announcements & Set Topics
-      </h3>
-      
-      <div class="grid grid-cols-2 gap-3">
-      <div>
-        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Current Topic</label>
-        <input type="text" id="adminTopicInput" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-indigo-500">
-      </div>
-      <div>
-        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Week badge date (or type "Auto" for live date)</label>
-        <input type="text" id="adminWeekBadgeInput" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-indigo-500">
-      </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Current Week Number</label>
-          <input type="number" id="adminWeekNumInput" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-indigo-500">
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Total Score Multiplier</label>
-          <input type="number" id="adminScoreMultiplier" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-indigo-500" value="10">
-        </div>
-      </div>
-
-      <div>
-        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Post New Announcement</label>
-        <div class="flex gap-2">
-          <input type="text" id="adminAnnounceText" placeholder="Welcome to the next level of Arrays!" class="flex-1 px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-indigo-500">
-          <button onclick="postAdminAnnouncement()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition">Post</button>
-        </div>
-      </div>
-
-      <div class="bg-red-50 border border-red-200 p-3 rounded-lg flex items-center justify-between">
-        <div>
-          <h4 class="text-xs font-bold text-red-800">Dangerous Operations</h4>
-          <p class="text-[9px] text-red-600">Completely reset the learning tracker's cloud records.</p>
-        </div>
-        <button onclick="triggerResetSystem()" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-bold transition">
-          Wipe Database
+      <div class="card border-red-200 bg-red-50/10">
+        <h3 class="font-bold text-red-800 text-sm mb-1">☢️ Hard reset operation</h3>
+        <p class="text-[10px] text-slate-400 mb-3">Re-initializes the global storage tree architecture completely to empty factory default states instantly.</p>
+        <button onclick="triggerResetSystem()" class="w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition">
+          Format Global Architecture Tree
         </button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- FIREBASE INTEGRATION & PORTAL PROGRAMMING CORE -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'team-tc-tracker-2026';
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-  apiKey: "",
-  authDomain: "unconfigured-sandbox.firebaseapp.com",
-  projectId: "unconfigured-sandbox",
-  storageBucket: "unconfigured-sandbox.appspot.com",
-  messagingSenderId: "12345",
-  appId: "1:12345:web:12345"
-};
-
-const hasActualFirebase = firebaseConfig.apiKey !== "";
-
-let db, auth;
-let appState = null;
-let currentLoggedInUserId = null;
-let isAdminSessionVerified = false;
-
-// Default structure updated with multiple categorized contests and submission-priority scoring
+<script>
+// ডিফল্ট স্টেট অবজেক্ট
 const defaultState = {
   initialized: false,
-  adminPassword: "admin",
-  currentTopic: "C Language — Arrays",
+  currentTopic: "Introduction to C & Flowcharts",
+  weekBadgeDate: "Oct 20 — Oct 26",
   currentWeekNum: 1,
-  weekBadgeDate: "Auto",
+  announcements: [
+    { from: "📢 Admin (Afad)", text: "Welcome to Team TC Learning Portal! Configure setup to activate sync model.", time: "System Boot" }
+  ],
   members: {
-    afad: { id:'afad',   name:'Afad',   email:'', password:'', color:'color-afad',   dot:'dot-afad',   specialization:'Web Dev',      solved:0, streak:0, score:0, weekProgress:0, badges:['🌟 Newcomer'], topics:['C Basics'] },
-    arafat: { id:'arafat', name:'Arafat', email:'', password:'', color:'color-arafat', dot:'dot-arafat', specialization:'AI/ML',        solved:0, streak:0, score:0, weekProgress:0, badges:['🌟 Newcomer'], topics:['C Basics'] },
-    munna: { id:'munna',  name:'Munna',  email:'', password:'', color:'color-munna',  dot:'dot-munna',  specialization:'App Dev',      solved:0, streak:0, score:0, weekProgress:0, badges:['🌟 Newcomer'], topics:['C Basics'] },
-    taky: { id:'taky',   name:'Taky',   email:'', password:'', color:'color-taky',   dot:'dot-taky',   specialization:'Cybersecurity',solved:0, streak:0, score:0, weekProgress:0, badges:['🌟 Newcomer'], topics:['C Basics'] },
+    afad: { name: "Afad", role: "Web Dev - Admin", email: "", password: "", solved: 0, streak: 0, avatarColor: "color-afad", dotColor: "dot-afad" },
+    arafat: { name: "Arafat", role: "AI/ML Enthusiast", email: "", password: "", solved: 0, streak: 0, avatarColor: "color-arafat", dotColor: "dot-arafat" },
+    munna: { name: "Munna", role: "App Developer", email: "", password: "", solved: 0, streak: 0, avatarColor: "color-munna", dotColor: "dot-munna" },
+    taky: { name: "Taky", role: "Cybersecurity Analyst", email: "", password: "", solved: 0, streak: 0, avatarColor: "color-taky", dotColor: "dot-taky" }
   },
-  taskState: {},
-  tasks: {
+  targets: {
     learn: [
-      { text:'What is an Array? Declaration & Initialization', who:'All' },
-      { text:'1D Array: input, output, traversal', who:'All' },
-      { text:'Array operations: search, insert, delete', who:'All' },
-      { text:'Pass array to function', who:'All' },
-      { text:'2D Array basics (matrix)', who:'All' },
+      { id: "l1", text: "Watch Module 1 & 2 video materials", doneBy: [] },
+      { id: "l2", text: "Read standard textbook chapters 1-3", doneBy: [] }
     ],
     practice: [
-      { text:'Find max & min in array', who:'All' },
-      { text:'Reverse an array', who:'All' },
-      { text:'Sum and average of array elements', who:'All' },
-      { text:'Check if array is sorted', who:'All' },
-      { text:'Count even & odd numbers', who:'All' },
+      { id: "p1", text: "Complete 5 basic problem set items", doneBy: [] },
+      { id: "p2", text: "Debug flow control conditional algorithms", doneBy: [] }
     ],
     contest: [
-      { text:'Mini contest: 3 array problems (60 min)', who:'All' },
-      { text:'Submit on any judge or paper', who:'All' },
-      { text:'Record score & rank', who:'All' },
+      { id: "c1", text: "Participate in Weekly Virtual Contest", doneBy: [] }
     ],
     review: [
-      { text:'Each person explains one concept to the group', who:'All' },
-      { text:'Note down mistakes from contest', who:'All' },
-      { text:'Plan next week: Strings in C', who:'All' },
-      { text:'Update tracker scores', who:'All' },
+      { id: "r1", text: "Analyze missed submissions and optimize code", doneBy: [] }
     ]
   },
-  contests: {
-    categories: ["Virtual Contest", "Private Contest", "Group Contest"],
-    activeCategory: "Group Contest",
-    data: {
-      "Virtual Contest": [],
-      "Private Contest": [],
-      "Group Contest": [
-        {
-          id: "contest_1",
-          name: "Contest #1",
-          date: "Week 1 - Day 6",
-          topic: "C Arrays",
-          userSubmissions: { afad: null, arafat: null, munna: null, taky: null },
-          adminOverrides: { afad: null, arafat: null, munna: null, taky: null }
-        }
-      ]
-    }
+  contestCategories: {
+    "Weekly Contest Series": [
+      { id: "row1", name: "TC Contest #01", date: "Oct 25", topic: "Variables & IO", scores: { afad: "-", arafat: "-", munna: "-", taky: "-" } }
+    ]
   },
-  announcements: [
-    { from: "🎉 Team TC", text: "Welcome to the tracker! Week 1 starts now. First topic: <strong>C Language — Arrays</strong>. Let's go! 💪", time: "Today" },
-    { from: "📌 Reminder", text: "7-day cycle: Learn 3 days → Practice 2 days → Contest 1 day → Review 1 day. Stay consistent!", time: "Pinned" }
-  ],
+  activeContestCategory: "Weekly Contest Series",
   roadmap: [
-    { year:'Year 1', title:'Foundation', items:[
-      {text:'C Language',done:true},{text:'C Arrays',current:true},{text:'C Strings',done:false},
-      {text:'C Pointers',done:false},{text:'C++ Basics',done:false},{text:'OOP Concepts',done:false},
-      {text:'DSA Basics',done:false},{text:'First Mini Project',done:false}
-    ]},
-    { year:'Year 2', title:'Specialization Begins', items:[
-      {text:'Advanced DSA',done:false},{text:'Web / ML / App / Cyber',done:false},
-      {text:'First Internship',done:false},{text:'ICPC Regional',done:false},{text:'Open Source',done:false}
-    ]},
-    { year:'Year 3', title:'Build Real Things', items:[
-      {text:'Major Team Project',done:false},{text:'Internship',done:false},
-      {text:'Technical Blog',done:false},{text:'GitHub Portfolio',done:false}
-    ]},
-    { year:'Year 4', title:'Career Launch', items:[
-      {text:'Job Preparation',done:false},{text:'Resume & LinkedIn',done:false},
-      {text:'Mock Interviews',done:false},{text:'First Job / Grad School',done:false}
-    ]}
-  ],
-  upcomingTopics: ['📝 Strings in C','🔗 Pointers','🗂️ Structures','📁 File I/O','⚡ C++ Basics','🔄 Recursion','📊 Sorting Algorithms','🔍 Searching','🌳 Linked List','🏗️ Stacks & Queues']
+    { id: "rm1", year: "Year 1 / Term 1", title: "Structured Programming Basics", status: "current" },
+    { id: "rm2", year: "Year 1 / Term 2", title: "Object Oriented Principles", status: "pending" },
+    { id: "rm3", year: "Year 2 / Term 1", title: "Data Structures & Analyzing Algorithms", status: "pending" }
+  ]
 };
 
+// গ্লোবাল স্টেট ইন্টিগ্রেশন (Firebase অন লোডে আপডেট করবে)
+window.appState = JSON.parse(JSON.stringify(defaultState));
+window.defaultState = defaultState;
+
+let currentLoggedInUserId = null;
+window.isAdminSessionVerified = false;
+
+// TOAST ENGINE MODULE
 function showToast(message, isError = false) {
   const container = document.getElementById('toastContainer');
+  if(!container) return;
   const toast = document.createElement('div');
-  toast.className = `px-4 py-3 rounded-xl shadow-lg text-xs font-bold text-white transition-all duration-300 transform translate-y-2 opacity-0 flex items-center gap-2 ${
-    isError ? 'bg-red-600' : 'bg-green-600'
+  toast.className = `px-4 py-3 rounded-xl shadow-lg border text-xs font-bold transition-all transform duration-300 translate-y-2 opacity-0 flex items-center gap-2 max-w-sm ${
+    isError ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'
   }`;
-  toast.innerHTML = `<span>${isError ? '⚠️' : '✅'}</span><span>${message}</span>`;
+  toast.innerHTML = `<span>${isError ? '❌' : '⚡'}</span> <div>${message}</div>`;
   container.appendChild(toast);
-  
+  setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 10);
   setTimeout(() => {
-    toast.classList.remove('translate-y-2', 'opacity-0');
-  }, 10);
-  
-  setTimeout(() => {
-    toast.classList.add('translate-y-2', 'opacity-0');
-    setTimeout(() => toast.remove(), 300);
+    toast.classList.add('translate-y-[-10px]', 'opacity-0');
+    setTimeout(() => { toast.remove(); }, 300);
   }, 3500);
 }
 
-function getCurrentFormattedDate() {
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const d = new Date();
-  return `${months[d.getMonth()]} ${d.getDate()}`;
+// NAVIGATION ENGINE
+window.showPage = function(pageId, buttonEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+  
+  const targetPage = document.getElementById(`page-${pageId}`);
+  if(targetPage) targetPage.classList.add('active');
+  if(buttonEl) buttonEl.classList.add('active');
+};
+
+// MODAL CONTROLS REPLACE DIALOGS
+let confirmPromiseResolve = null;
+function openCustomConfirm(title, msg, placeholderKeyword = "") {
+  document.getElementById('confirmModalTitle').innerText = title;
+  document.getElementById('confirmModalMsg').innerText = msg;
+  const input = document.getElementById('confirmModalInput');
+  input.value = "";
+  if (placeholderKeyword) {
+    input.placeholder = `Type: ${placeholderKeyword}`;
+    input.classList.remove('hidden');
+  } else {
+    input.classList.add('hidden');
+  }
+  document.getElementById('confirmModal').classList.remove('hidden');
+  return new Promise((resolve) => { confirmPromiseResolve = resolve; });
 }
 
-// Ensure old state maps seamlessly to new structural categorized database
-function runStateMigrations(state) {
-  let modified = false;
-  if (!state.contests || Array.isArray(state.contests)) {
-    const oldList = Array.isArray(state.contests) ? state.contests : [];
-    state.contests = {
-      categories: ["Virtual Contest", "Private Contest", "Group Contest"],
-      activeCategory: "Group Contest",
-      data: {
-        "Virtual Contest": [],
-        "Private Contest": [],
-        "Group Contest": oldList.map((c, i) => {
-          const resultsObj = c.results || {};
-          return {
-            id: `migrated_${Date.now()}_${i}`,
-            name: c.name || `Contest #${i + 1}`,
-            date: c.date || "Week 1 - Day 6",
-            topic: c.topic || "C Arrays",
-            userSubmissions: { afad: null, arafat: null, munna: null, taky: null },
-            adminOverrides: {
-              afad: resultsObj.afad && resultsObj.afad !== '—' ? parseFloat(resultsObj.afad) || null : null,
-              arafat: resultsObj.arafat && resultsObj.arafat !== '—' ? parseFloat(resultsObj.arafat) || null : null,
-              munna: resultsObj.munna && resultsObj.munna !== '—' ? parseFloat(resultsObj.munna) || null : null,
-              taky: resultsObj.taky && resultsObj.taky !== '—' ? parseFloat(resultsObj.taky) || null : null,
-            }
-          };
-        })
-      }
-    };
-    modified = true;
+document.getElementById('confirmCancelBtn').addEventListener('click', () => {
+  document.getElementById('confirmModal').classList.add('hidden');
+  if(confirmPromiseResolve) confirmPromiseResolve(false);
+});
+document.getElementById('confirmProceedBtn').addEventListener('click', () => {
+  const input = document.getElementById('confirmModalInput');
+  if (!input.classList.contains('hidden')) {
+    if (input.value.trim() !== input.placeholder.replace("Type: ", "")) {
+      showToast("Confirmation string did not match exactly!", true);
+      return;
+    }
   }
-  
-  // Backwards compatibility for newly added categories fields
-  if (!state.contests.categories) {
-    state.contests.categories = ["Virtual Contest", "Private Contest", "Group Contest"];
-    modified = true;
-  }
-  if (!state.contests.activeCategory) {
-    state.contests.activeCategory = "Group Contest";
-    modified = true;
-  }
-  if (!state.contests.data) {
-    state.contests.data = { "Virtual Contest": [], "Private Contest": [], "Group Contest": [] };
-    modified = true;
-  }
-  return { state, modified };
-}
+  document.getElementById('confirmModal').classList.add('hidden');
+  if(confirmPromiseResolve) confirmPromiseResolve(true);
+});
 
-// Compute dynamic scores globally based on solves, streaks and weighted contest averages
-function recalculateGlobalPerformanceScores() {
-  const membersList = Object.keys(appState.members);
+// INTERFACE WORKSPACE RENDERING
+window.renderAllViews = function() {
+  const state = window.appState;
   
-  membersList.forEach(userId => {
-    let contestSum = 0;
-    let countedContests = 0;
-    
-    // Scan all categories and accumulated scores
-    Object.keys(appState.contests.data).forEach(cat => {
-      const contestArray = appState.contests.data[cat] || [];
-      contestArray.forEach(cont => {
-        const adminVal = cont.adminOverrides?.[userId];
-        const userVal = cont.userSubmissions?.[userId];
-        
-        let finalScore = 0;
-        if (adminVal !== undefined && adminVal !== null) {
-          finalScore = parseFloat(adminVal) || 0;
-        } else if (userVal !== undefined && userVal !== null) {
-          finalScore = parseFloat(userVal) || 0;
-        }
-        
-        contestSum += finalScore;
-        countedContests++;
-      });
-    });
+  // Hero and Metadata Engine
+  document.getElementById('heroTopicText').innerText = state.currentTopic;
+  document.getElementById('weekBadge').innerText = state.weekBadgeDate;
+  document.getElementById('currentWeekNumText').innerText = state.currentWeekNum;
+  document.getElementById('weekTargetsTitle').innerText = `Week ${state.currentWeekNum} Specific Targets`;
 
-    const m = appState.members[userId];
-    const baseMult = 10; 
-    // formula: (Solved * 10) + (Streak * 5) + (Contest total out of 10 converted to weighted scale)
-    m.score = Math.round((m.solved * baseMult) + (m.streak * 5) + (contestSum * baseMult));
+  // Aggregate global statistical nodes
+  let totalS = 0; let highestStreak = 0;
+  Object.values(state.members).forEach(m => {
+    totalS += (parseInt(m.solved) || 0);
+    if((parseInt(m.streak) || 0) > highestStreak) highestStreak = parseInt(m.streak);
   });
-}
+  document.getElementById('totalSolved').innerText = totalS;
+  document.getElementById('topStreak').innerText = `🔥 ${highestStreak}`;
 
-async function initializeAppPortal() {
-  if (hasActualFirebase) {
-    try {
-      const app = initializeApp(firebaseConfig);
-      db = getFirestore(app);
-      auth = getAuth(app);
-      
-      await signInAnonymously(auth);
-      
-      const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'trackerState');
-      
-      onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const rawState = docSnap.data();
-          const { state, modified } = runStateMigrations(rawState);
-          appState = state;
-          
-          if (modified) {
-            writeStateToDB();
-          } else {
-            handleStateSync();
-          }
-        } else {
-          appState = JSON.parse(JSON.stringify(defaultState));
-          showSetupModal();
-        }
-      }, (error) => {
-        console.error("Firestore read error: ", error);
-        loadLocalFallback();
-      });
-    } catch (e) {
-      console.warn("Firebase Init failed. Falling back to Offline Local mode.", e);
-      loadLocalFallback();
-    }
-  } else {
-    loadLocalFallback();
-  }
-}
-
-function loadLocalFallback() {
-  const localVal = localStorage.getItem('teamTC_cloudState_v2');
-  if (localVal) {
-    const raw = JSON.parse(localVal);
-    const { state } = runStateMigrations(raw);
-    appState = state;
-  } else {
-    appState = JSON.parse(JSON.stringify(defaultState));
-  }
-  handleStateSync();
-}
-
-async function writeStateToDB() {
-  recalculateGlobalPerformanceScores();
-  if (hasActualFirebase && db) {
-    try {
-      const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'trackerState');
-      await setDoc(docRef, appState);
-    } catch (e) {
-      console.error("Firestore Save Error", e);
-    }
-  } else {
-    localStorage.setItem('teamTC_cloudState_v2', JSON.stringify(appState));
-    handleStateSync();
-  }
-}
-
-function showSetupModal() {
-  document.getElementById('setupModal').classList.remove('hidden');
-}
-
-function handleStateSync() {
-  if (!appState.initialized) {
-    showSetupModal();
-  } else {
-    document.getElementById('setupModal').classList.add('hidden');
+  // Logged user dynamic updates
+  if (currentLoggedInUserId) {
+    const prof = state.members[currentLoggedInUserId];
+    document.getElementById('navUserName').innerText = prof.name;
+    document.getElementById('navUserRole').innerText = prof.role;
     
-    const savedUser = sessionStorage.getItem('tc_user');
-    if (savedUser && appState.members[savedUser]) {
-      currentLoggedInUserId = savedUser;
-      document.getElementById('loginOverlay').classList.add('hidden');
-      syncPersonalStatsWidget();
-      renderAllViews();
-    } else {
-      document.getElementById('loginOverlay').classList.remove('hidden');
+    // Admin toggles layout parameters
+    if (currentLoggedInUserId === 'afad' && window.isAdminSessionVerified) {
+      document.getElementById('newCategoryTriggerBtn').classList.remove('hidden');
+      document.getElementById('adminContestActionBox').classList.remove('hidden');
+      document.getElementById('adminCategoryDeleteBox').classList.remove('hidden');
+      document.getElementById('adminRoadmapActionBox').classList.remove('hidden');
     }
   }
-}
-
-// SETUP EVENT LISTENER
-document.getElementById('submitSetupBtn').addEventListener('click', async () => {
-  const adminPassInput = document.getElementById('setupAdminPassword').value.trim();
-  if (!adminPassInput) {
-    showToast("Please enter a secure Admin password first!", true);
-    return;
-  }
-
-  const ids = ['afad', 'arafat', 'munna', 'taky'];
-  let missing = false;
-  
-  ids.forEach(id => {
-    const email = document.getElementById(`regEmail-${id}`).value.trim();
-    const pass = document.getElementById(`regPass-${id}`).value.trim();
-    if (!email || !pass) {
-      missing = true;
-    } else {
-      appState.members[id].email = email;
-      appState.members[id].password = pass;
-    }
-  });
-
-  if (missing) {
-    showToast("Please provide all 4 member emails & initial passwords!", true);
-    return;
-  }
-
-  appState.adminPassword = adminPassInput;
-  appState.initialized = true;
-
-  await writeStateToDB();
-  showToast("Team TC Tracker successfully configured! Feel free to log in.");
-  document.getElementById('setupModal').classList.add('hidden');
-});
-
-// LOGIN ACTION
-document.getElementById('loginSubmitBtn').addEventListener('click', () => {
-  const selectedUser = document.getElementById('loginUserSelect').value;
-  const emailInput = document.getElementById('loginEmail').value.trim();
-  const passwordInput = document.getElementById('loginPassword').value.trim();
-
-  const userRecord = appState.members[selectedUser];
-  if (!userRecord) {
-    showToast("Invalid profile configuration state.", true);
-    return;
-  }
-
-  if (userRecord.email.toLowerCase() === emailInput.toLowerCase() && userRecord.password === passwordInput) {
-    currentLoggedInUserId = selectedUser;
-    sessionStorage.setItem('tc_user', selectedUser);
-    document.getElementById('loginOverlay').classList.add('hidden');
-    showToast(`Welcome back, ${userRecord.name}!`);
-    
-    // Auto session state check
-    if (currentLoggedInUserId === 'afad') {
-      isAdminSessionVerified = true; 
-    }
-
-    syncPersonalStatsWidget();
-    renderAllViews();
-  } else {
-    showToast("Incorrect email or password configured by admin!", true);
-  }
-});
-
-document.getElementById('adminQuickLoginBtn').addEventListener('click', () => {
-  promptAdminAuth();
-});
-
-window.updateMyStats = function() {
-  if (!currentLoggedInUserId || !appState) return;
-  const solved = parseInt(document.getElementById('mySolvedInput').value) || 0;
-  const streak = parseInt(document.getElementById('myStreakInput').value) || 0;
-
-  appState.members[currentLoggedInUserId].solved = solved;
-  appState.members[currentLoggedInUserId].streak = streak;
-
-  writeStateToDB();
-  showToast("Your statistics synced to team cloud!");
-};
-
-function syncPersonalStatsWidget() {
-  if (!currentLoggedInUserId || !appState) return;
-  const m = appState.members[currentLoggedInUserId];
-  document.getElementById('mySolvedInput').value = m.solved;
-  document.getElementById('myStreakInput').value = m.streak;
-
-  document.getElementById('navUserName').textContent = m.name;
-  document.getElementById('navUserRole').textContent = m.id === 'afad' ? 'Web Dev (Admin)' : m.specialization;
-  
-  const dot = document.getElementById('activeDot');
-  dot.className = `w-2.5 h-2.5 rounded-full dot-${m.id}`;
-}
-
-window.logout = function() {
-  sessionStorage.removeItem('tc_user');
-  currentLoggedInUserId = null;
-  isAdminSessionVerified = false;
-  document.getElementById('loginOverlay').classList.remove('hidden');
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-dashboard').classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.nav-tab')[0].classList.add('active');
-};
-
-window.showPage = function(name, btn) {
-  if (!currentLoggedInUserId) {
-    showToast("Authorization required. Please log in first.", true);
-    return;
-  }
-  
-  if (name === 'admin' && !isAdminSessionVerified) {
-    showToast("Admin authorization required.", true);
-    return;
-  }
-
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  
-  document.getElementById('page-'+name).classList.add('active');
-  if (btn) btn.classList.add('active');
-
-  if(name==='members') renderMembers();
-  if(name==='contests') renderContestView();
-  if(name==='roadmap') renderRoadmap();
-  if(name==='targets') { renderTasks(); renderMemberProgress(); }
-  if(name==='admin') renderAdminView();
-};
-
-window.tryOpenAdmin = function(btn) {
-  if (isAdminSessionVerified) {
-    showPage('admin', btn);
-  } else {
-    promptAdminAuth(btn);
-  }
-};
-
-function promptAdminAuth(targetBtn = null) {
-  document.getElementById('adminAuthModal').classList.remove('hidden');
-  document.getElementById('adminVerifyPassInput').focus();
-  window.adminTargetButtonRef = targetBtn;
-}
-
-document.getElementById('cancelAdminAuthBtn').addEventListener('click', () => {
-  document.getElementById('adminAuthModal').classList.add('hidden');
-});
-
-document.getElementById('submitAdminAuthBtn').addEventListener('click', () => {
-  verifyAdminCredentials();
-});
-
-document.getElementById('adminVerifyPassInput').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') verifyAdminCredentials();
-});
-
-function verifyAdminCredentials() {
-  const entered = document.getElementById('adminVerifyPassInput').value.trim();
-  if (entered === appState.adminPassword) {
-    isAdminSessionVerified = true;
-    document.getElementById('adminAuthModal').classList.add('hidden');
-    showToast("Access Granted. Admin Center unlocked.");
-    
-    const adminTabBtn = document.querySelectorAll('.nav-tab')[5]; 
-    showPage('admin', adminTabBtn);
-  } else {
-    showToast("Invalid admin verification code!", true);
-  }
-  document.getElementById('adminVerifyPassInput').value = '';
-}
-
-function renderAllViews() {
-  const liveDate = getCurrentFormattedDate();
-  document.getElementById('weekBadge').textContent = (appState.weekBadgeDate && appState.weekBadgeDate !== "Auto" && appState.weekBadgeDate.trim() !== "") ? appState.weekBadgeDate : liveDate;
-  document.getElementById('heroTopicText').textContent = appState.currentTopic;
-  document.getElementById('currentWeekNumText').textContent = appState.currentWeekNum;
 
   renderLeaderboard();
   renderAnnouncements();
-  
-  // Conditionally render categories button additions if Afad
-  const catBtn = document.getElementById('newCategoryTriggerBtn');
-  if (catBtn) {
-    if (currentLoggedInUserId === 'afad') {
-      catBtn.classList.remove('hidden');
-      catBtn.classList.add('inline-flex');
-    } else {
-      catBtn.classList.add('hidden');
-      catBtn.classList.remove('inline-flex');
-    }
-  }
-}
+  renderMemberCards();
+  renderTasksBlock();
+  renderContestsBlock();
+  renderRoadmapBlock();
+};
 
 function renderLeaderboard() {
-  const membersList = Object.values(appState.members);
-  const sorted = [...membersList].sort((a,b) => b.score - a.score || b.solved - a.solved);
+  const lb = document.getElementById('leaderboard');
+  if(!lb) return;
+  lb.innerHTML = '';
   
-  document.getElementById('leaderboard').innerHTML = sorted.map((m, i) => {
-    const icons = ['🥇','🥈','🥉'];
-    const rankClass = ['rank-1','rank-2','rank-3','rank-other'][Math.min(i,3)];
-    return `<div class="lb-row">
-      <div class="lb-rank ${rankClass}">${icons[i]||'#'+(i+1)}</div>
-      <div class="lb-avatar ${m.color}">${m.name[0]}</div>
-      <div class="lb-info">
-        <div class="lb-name"><span class="dot ${m.dot}"></span>${m.name}</div>
-        <div class="lb-sub">${m.id === 'afad' ? 'Web Dev (Admin)' : m.specialization}</div>
-      </div>
-      <div class="progress-bar-wrap">
-        <div style="font-size:0.68rem;color:var(--muted)">Week progress ${m.weekProgress}%</div>
-        <div class="progress-bar"><div class="progress-fill" style="width:${m.weekProgress}%"></div></div>
-      </div>
-      <div class="lb-right">
-        <div class="lb-score">${m.score} pts</div>
-        <div class="lb-streak font-mono">🔥 ${m.streak} day streak</div>
-      </div>
-    </div>`;
-  }).join('');
-  
-  document.getElementById('totalSolved').textContent = membersList.reduce((a,b)=>a+b.solved,0);
-  document.getElementById('topStreak').textContent = '🔥 '+Math.max(...membersList.map(m=>m.streak));
-}
+  const sorted = Object.entries(window.appState.members).sort((a,b) => b[1].solved - a[1].solved);
+  let totalSolvedTeam = 0;
+  sorted.forEach(m => totalSolvedTeam += m[1].solved);
 
-function renderAnnouncements() {
-  const container = document.getElementById('announcementsList');
-  if (!container) return;
-  container.innerHTML = appState.announcements.map(ann => `
-    <div class="announce-card">
-      <div class="announce-meta">
-        <span class="announce-from">${ann.from}</span>
-        <span class="announce-time">${ann.time}</span>
-      </div>
-      <div class="announce-text">${ann.text}</div>
-    </div>
-  `).join('');
-}
+  sorted.forEach((item, idx) => {
+    const id = item[0]; const m = item[1];
+    let rankClass = "rank-other"; let medal = "";
+    if(idx===0) { rankClass="rank-1"; medal="👑"; }
+    else if(idx===1) rankClass="rank-2";
+    else if(idx===2) rankClass="rank-3";
 
-function renderMembers() {
-  const el = document.getElementById('memberCards');
-  if(!el) return;
-  
-  const list = Object.values(appState.members);
-  el.innerHTML = list.map(m => `
-    <div class="member-card">
-      <div class="member-header">
-        <div class="member-avatar ${m.color}">${m.name[0]}</div>
-        <div>
-          <div class="member-name">${m.name}</div>
-          <div class="member-role">${m.id === 'afad' ? 'Web Dev (Admin)' : 'Focus: ' + m.specialization}</div>
-          <div class="text-[10px] text-slate-400 font-mono mt-0.5">${m.email}</div>
+    const pct = totalSolvedTeam > 0 ? Math.round((m.solved / totalSolvedTeam) * 100) : 0;
+
+    lb.innerHTML += `
+      <div class="lb-row">
+        <div class="lb-rank ${rankClass}">${medal ? medal : idx + 1}</div>
+        <div class="lb-avatar ${m.avatarColor}">${m.name[0]}</div>
+        <div class="lb-info">
+          <div class="lb-name">${m.name}</div>
+          <div class="lb-sub">${m.role}</div>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar"><div class="progress-fill" style="width: ${pct}%"></div></div>
+        </div>
+        <div class="lb-right">
+          <div class="lb-score">${m.solved} Solved</div>
+          <div class="lb-streak">🔥 ${m.streak} days</div>
         </div>
       </div>
-      <div class="member-stats">
-        <div class="m-stat"><div class="m-stat-val" style="color:var(--accent)">${m.solved}</div><div class="m-stat-label">Solved</div></div>
-        <div class="m-stat"><div class="m-stat-val" style="color:var(--yellow)">🔥${m.streak}</div><div class="m-stat-label">Streak</div></div>
-        <div class="m-stat"><div class="m-stat-val" style="color:var(--accent2)">${m.score}</div><div class="m-stat-label">Points</div></div>
-        <div class="m-stat"><div class="m-stat-val" style="color:var(--green)">${m.weekProgress}%</div><div class="m-stat-label">This Week</div></div>
-      </div>
-      <div style="margin-bottom:10px">
-        <div style="font-size:0.7rem;color:var(--muted);margin-bottom:5px">TOPICS COVERED</div>
-        ${m.topics.map(t=>`<span class="topic-tag">${t}</span>`).join('')}
-      </div>
-      <div>
-        <div style="font-size:0.7rem;color:var(--muted);margin-bottom:5px">BADGES</div>
-        ${m.badges.map(b=>`<span class="badge badge-gold">${b}</span>`).join('')}
-      </div>
-      <div class="progress-bar" style="margin-top:14px"><div class="progress-fill" style="width:${m.weekProgress}%"></div></div>
-      <div style="font-size:0.7rem;color:var(--muted);margin-top:4px">Weekly Progress: ${m.weekProgress}%</div>
-    </div>`).join('');
-}
-
-function renderTasks() {
-  document.getElementById('weekTargetsTitle').textContent = `Week ${appState.currentWeekNum} Targets — ${appState.currentTopic}`;
-  
-  [['learn','learnTasks'],['practice','practiceTasks'],['contest','contestTasks'],['review','reviewTasks']].forEach(([phase,id])=>{
-    const el=document.getElementById(id);
-    if(!el) return;
-    el.innerHTML = appState.tasks[phase].map((t,i)=>{
-      const key=phase+'_'+i;
-      const done = appState.taskState ? appState.taskState[key] || false : false;
-      return `<div class="task-item">
-        <div class="task-check ${done?'done':''}" onclick="toggleTask('${key}')"></div>
-        <div style="flex:1">
-          <div class="task-text ${done?'done':''}">${t.text}</div>
-          <div class="task-who">${t.who}</div>
-        </div>
-      </div>`;
-    }).join('');
+    `;
   });
 }
 
-window.toggleTask = function(key) {
-  if (!appState.taskState) appState.taskState = {};
-  appState.taskState[key] = !appState.taskState[key];
-  writeStateToDB();
-  renderTasks();
-};
-
-function renderMemberProgress() {
-  const el=document.getElementById('memberProgress');
-  if(!el) return;
-  const list = Object.values(appState.members);
-  
-  el.innerHTML = list.map(m=>{
-    const isMe = m.id === currentLoggedInUserId;
-    return `
-    <div style="display:flex;align-items:center;gap:14px;padding:11px 0;border-bottom:1px solid #f1f5f9">
-      <div class="lb-avatar ${m.color}" style="width:34px;height:34px;font-size:0.82rem">${m.name[0]}</div>
-      <div style="min-width:65px;font-weight:600;font-size:0.9rem">${m.name}</div>
-      <div style="flex:1"><div class="progress-bar"><div class="progress-fill" style="width:${m.weekProgress}%"></div></div></div>
-      <div style="font-family:'JetBrains Mono',monospace;font-size:0.82rem;color:var(--accent);min-width:36px;text-align:right">${m.weekProgress}%</div>
-      <input type="range" min="0" max="100" value="${m.weekProgress}" 
-        oninput="updateProgress('${m.id}',this.value)" 
-        ${!isMe ? 'disabled' : ''} 
-        style="width:85px;accent-color:var(--accent);cursor:${isMe ? 'pointer' : 'not-allowed'}; opacity: ${isMe ? 1 : 0.6}">
-    </div>`
-  }).join('');
+function renderAnnouncements() {
+  const list = document.getElementById('announcementsList');
+  if(!list) return;
+  list.innerHTML = '';
+  window.appState.announcements.forEach(a => {
+    list.innerHTML += `
+      <div class="announce-card">
+        <div class="announce-meta">
+          <div class="announce-from">${a.from}</div>
+          <div class="announce-time">${a.time}</div>
+        </div>
+        <div class="announce-text">${a.text}</div>
+      </div>
+    `;
+  });
 }
 
-window.updateProgress = function(id, val) {
-  if (id !== currentLoggedInUserId) return; 
-  appState.members[id].weekProgress = parseInt(val);
-  writeStateToDB();
-  renderMemberProgress();
-};
-
-function renderContestView() {
-  const contestState = appState.contests;
-  const activeCat = contestState.activeCategory;
+function renderMemberCards() {
+  const wrapper = document.getElementById('memberCards');
+  if(!wrapper) return;
+  wrapper.innerHTML = '';
   
-  // Set Active elements heading metadata
-  document.getElementById('activeCategoryHeading').textContent = activeCat;
-  document.getElementById('activeCategoryBadge').textContent = `${activeCat} Section`;
-
-  // Render Categories Row
-  const catContainer = document.getElementById('contestCategoriesContainer');
-  catContainer.innerHTML = contestState.categories.map(cat => {
-    const isActive = cat === activeCat;
-    return `
-      <button onclick="setContestActiveCategory('${cat}')" class="px-4 py-2 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
-        isActive 
-          ? 'bg-blue-600 text-white shadow-md shadow-blue-500/25' 
-          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-      }">
-        <span>📊</span> ${cat}
-      </button>
+  Object.entries(window.appState.members).forEach(([id, m]) => {
+    wrapper.innerHTML += `
+      <div class="member-card">
+        <div class="member-header">
+          <div class="member-avatar ${m.avatarColor}">${m.name[0]}</div>
+          <div>
+            <div class="member-name">${m.name}</div>
+            <div class="member-role">${m.role}</div>
+          </div>
+        </div>
+        <div class="member-stats">
+          <div class="m-stat"><div class="m-stat-val text-blue-600">${m.solved}</div><div class="m-stat-label">Problems</div></div>
+          <div class="m-stat"><div class="m-stat-val text-amber-600">🔥 ${m.streak}</div><div class="m-stat-label">Streak</div></div>
+        </div>
+        <div>
+          <span class="topic-tag">Algorithms</span><span class="topic-tag">Math</span>
+          ${m.solved > 10 ? '<span class="badge badge-gold">⭐ Elite Solved</span>' : ''}
+          ${m.streak > 4 ? '<span class="badge badge-green">⚡ High Streak</span>' : ''}
+        </div>
+      </div>
     `;
-  }).join('');
+  });
+}
 
-  // Render Table content rows
-  const contestBody = document.getElementById('contestBody');
-  const contestList = contestState.data[activeCat] || [];
-  
-  if (contestList.length === 0) {
-    contestBody.innerHTML = `<tr><td colspan="7" class="text-slate-400 py-8 text-center italic">No contest logs created in this category yet. Click Add Contest below to begin!</td></tr>`;
-  } else {
-    contestBody.innerHTML = contestList.map(c => {
-      return `
-        <tr>
-          <td class="font-bold text-slate-800">${c.name}</td>
-          <td class="text-slate-500 font-medium">${c.date}</td>
-          <td><span class="topic-tag">${c.topic}</span></td>
-          <td class="px-2">${renderContestScoreCell(c, 'afad')}</td>
-          <td class="px-2">${renderContestScoreCell(c, 'arafat')}</td>
-          <td class="px-2">${renderContestScoreCell(c, 'munna')}</td>
-          <td class="px-2">${renderContestScoreCell(c, 'taky')}</td>
-        </tr>
+function renderTasksBlock() {
+  const renderList = (targetArr, elementId, phaseKey) => {
+    const el = document.getElementById(elementId);
+    if(!el) return;
+    el.innerHTML = '';
+    if(targetArr.length === 0) {
+      el.innerHTML = '<p class="text-xs text-slate-400 italic p-2">No targeted task items defined.</p>';
+      return;
+    }
+    targetArr.forEach((t, index) => {
+      const isDoneByMe = t.doneBy && t.doneBy.includes(currentLoggedInUserId);
+      let whoBadges = "";
+      if (t.doneBy && t.doneBy.length > 0) {
+        whoBadges = t.doneBy.map(uId => {
+          const u = window.appState.members[uId];
+          return `<span class="inline-block px-1.5 py-0.5 text-[9px] font-bold rounded ${u?.avatarColor || 'bg-slate-100'} mx-0.5">${u?.name || uId}</span>`;
+        }).join('');
+      }
+
+      const item = document.createElement('div');
+      item.className = "task-item";
+      item.innerHTML = `
+        <div class="task-check ${isDoneByMe ? 'done' : ''}" data-phase="${phaseKey}" data-index="${index}"></div>
+        <div class="task-text ${isDoneByMe ? 'done' : ''}">
+          ${t.text}
+          <div class="task-who">${whoBadges ? 'Completed by: ' + whoBadges : '⏳ Awaiting Completion'}</div>
+        </div>
       `;
-    }).join('');
+      // টাস্ক টিক চিহ্নে ক্লিক করলে তা রিয়েলটাইমে সিঙ্ক হবে
+      item.querySelector('.task-check').addEventListener('click', (e) => {
+        const phase = e.target.getAttribute('data-phase');
+        const idx = parseInt(e.target.getAttribute('data-index'));
+        toggleTaskCompletion(phase, idx);
+      });
+      el.appendChild(item);
+    });
+  };
+
+  renderList(window.appState.targets.learn, 'learnTasks', 'learn');
+  renderList(window.appState.targets.practice, 'practiceTasks', 'practice');
+  renderList(window.appState.targets.contest, 'contestTasks', 'contest');
+  renderList(window.appState.targets.review, 'reviewTasks', 'review');
+
+  // রেন্ডার মেম্বার প্রোগ্রেস চার্টবার
+  const prog = document.getElementById('memberProgress');
+  if(prog) {
+    prog.innerHTML = '';
+    Object.entries(window.appState.members).forEach(([id, m]) => {
+      let done = 0; let total = 0;
+      Object.values(window.appState.targets).forEach(phaseArr => {
+        phaseArr.forEach(t => {
+          total++;
+          if(t.doneBy && t.doneBy.includes(id)) done++;
+        });
+      });
+      const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+      prog.innerHTML += `
+        <div class="mb-3">
+          <div class="flex justify-between text-xs font-semibold mb-1">
+            <span class="flex items-center gap-1"><span class="dot ${m.dotColor}"></span> ${m.name}</span>
+            <span class="text-slate-500">${done}/${total} Objectives (${percent}%)</span>
+          </div>
+          <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden border">
+            <div class="h-full ${m.avatarColor.replace('text-','bg-')}" style="width: ${percent}%; background-color: currentColor;"></div>
+          </div>
+        </div>
+      `;
+    });
   }
+}
 
-  // Populate Select drop downs
-  const userSelect = document.getElementById('userSubmitContestSelect');
-  const admSelect = document.getElementById('admScoreOverrideContestSelect');
-
-  const selectOptions = contestList.map(c => `<option value="${c.id}">${c.name} — ${c.topic}</option>`).join('');
+function toggleTaskCompletion(phase, index) {
+  const task = window.appState.targets[phase][index];
+  if(!task.doneBy) task.doneBy = [];
   
-  userSelect.innerHTML = selectOptions || `<option value="">No contests available</option>`;
-  admSelect.innerHTML = selectOptions || `<option value="">No contests available</option>`;
-
-  // Handle direct admin panels condition
-  const directPanel = document.getElementById('directAdminContestPanel');
-  if (currentLoggedInUserId === 'afad' || isAdminSessionVerified) {
-    directPanel.classList.remove('hidden');
+  const uIdx = task.doneBy.indexOf(currentLoggedInUserId);
+  if(uIdx > -1) {
+    task.doneBy.splice(uIdx, 1);
+    showToast("Objective status reverted.");
   } else {
-    directPanel.classList.add('hidden');
+    task.doneBy.push(currentLoggedInUserId);
+    showToast("Objective marked as achieved!");
   }
-
-  renderContestLeaderboard();
+  window.writeStateToDB(); // ফায়ারবেসে রাইট হবে
 }
 
-function renderContestScoreCell(contest, userId) {
-  const adminVal = contest.adminOverrides?.[userId];
-  const userVal = contest.userSubmissions?.[userId];
+function renderContestsBlock() {
+  const catsBox = document.getElementById('contestCategoriesContainer');
+  const tbody = document.getElementById('contestBody');
+  if(!catsBox || !tbody) return;
 
-  if (adminVal !== undefined && adminVal !== null) {
-    return `
-      <div class="flex flex-col items-center">
-        <span class="text-indigo-600 font-bold font-mono text-sm">${adminVal}/10</span>
-        <span class="text-[8px] tracking-wide font-bold uppercase text-indigo-400 bg-indigo-50 px-1 py-0.5 rounded mt-0.5">Admin Set</span>
-      </div>
-    `;
-  } else if (userVal !== undefined && userVal !== null) {
-    return `
-      <div class="flex flex-col items-center">
-        <span class="text-slate-700 font-semibold font-mono text-sm">${userVal}/10</span>
-        <span class="text-[8px] tracking-wide font-semibold uppercase text-emerald-500 bg-emerald-50 px-1 py-0.5 rounded mt-0.5">Self-Sub</span>
-      </div>
-    `;
-  } else {
-    return `<span class="text-slate-300 italic text-xs">Waiting</span>`;
-  }
-}
+  catsBox.innerHTML = '';
+  tbody.innerHTML = '';
 
-// MULTI-CATEGORY TRIGGER CODES
-window.setContestActiveCategory = function(cat) {
-  appState.contests.activeCategory = cat;
-  renderContestView();
-};
+  const activeCat = window.appState.activeContestCategory || Object.keys(window.appState.contestCategories)[0];
+  document.getElementById('activeCategoryHeading').innerText = activeCat;
+  document.getElementById('activeCategoryBadge').innerText = `${window.appState.contestCategories[activeCat]?.length || 0} Records`;
+  const actionCatLabel = document.getElementById('actionBoxCategoryName');
+  if(actionCatLabel) actionCatLabel.innerText = activeCat;
 
-window.openNewCategoryModal = function() {
-  if (currentLoggedInUserId !== 'afad') {
-    showToast("Privilege limit. Only Afad can configure new categories.", true);
+  Object.keys(window.appState.contestCategories).forEach(cat => {
+    const btn = document.createElement('button');
+    btn.className = `px-3 py-1.5 rounded-lg border text-xs font-bold transition ${
+      cat === activeCat ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+    }`;
+    btn.innerText = cat;
+    btn.onclick = () => {
+      window.appState.activeContestCategory = cat;
+      window.writeStateToDB();
+    };
+    catsBox.appendChild(btn);
+  });
+
+  const rows = window.appState.contestCategories[activeCat] || [];
+  if(rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-xs text-slate-400 italic py-6">No spreadsheet records posted under this category division yet.</td></tr>`;
     return;
   }
-  document.getElementById('newCategoryModal').classList.remove('hidden');
-  document.getElementById('newCategoryNameInput').focus();
+
+  rows.forEach((r, rIdx) => {
+    const tr = document.createElement('tr');
+    
+    let scoresHTML = "";
+    ['afad', 'arafat', 'munna', 'taky'].forEach(uId => {
+      const isMe = (uId === currentLoggedInUserId);
+      const currentVal = r.scores[uId] || "-";
+      if(isMe) {
+        scoresHTML += `
+          <td>
+            <input type="text" value="${currentVal}" data-row="${rIdx}" data-user="${uId}" 
+              class="w-16 text-center text-xs font-bold border rounded py-0.5 outline-none focus:border-blue-500 contest-score-edit-input">
+          </td>
+        `;
+      } else {
+        scoresHTML += `<td class="font-semibold text-slate-600">${currentVal}</td>`;
+      }
+    });
+
+    tr.innerHTML = `
+      <td class="font-bold text-slate-800 text-left">
+        ${currentLoggedInUserId === 'afad' && window.isAdminSessionVerified ? `<button class="text-red-500 mr-1 hover:text-red-700 font-normal" onclick="deleteContestRow(${rIdx})">🗑️</button>` : ''}
+        ${r.name}
+      </td>
+      <td class="text-slate-400 text-xs font-medium font-mono">${r.date}</td>
+      <td><span class="px-2 py-0.5 bg-slate-100 border text-slate-600 rounded text-xs font-medium">${r.topic}</span></td>
+      ${scoresHTML}
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // কনটেস্ট স্কোর এডিট ইভেন্ট লিসেনার
+  document.querySelectorAll('.contest-score-edit-input').forEach(input => {
+    input.addEventListener('change', (e) => {
+      const rIdx = parseInt(e.target.getAttribute('data-row'));
+      const uId = e.target.getAttribute('data-user');
+      const val = e.target.value.trim();
+      
+      window.appState.contestCategories[activeCat][rIdx].scores[uId] = val || "-";
+      window.writeStateToDB();
+      showToast("Contest ledger matrix cell synced!");
+    });
+  });
+}
+
+// ADMIN ACTION: ADD ROW
+window.addContestRow = function() {
+  const name = document.getElementById('cInputName').value.trim();
+  const date = document.getElementById('cInputDate').value.trim();
+  const topic = document.getElementById('cInputTopic').value.trim();
+  if(!name) { showToast("Contest Title label cannot be blank!", true); return; }
+
+  const activeCat = window.appState.activeContestCategory;
+  window.appState.contestCategories[activeCat].push({
+    id: "r" + Date.now(),
+    name: name,
+    date: date || "N/A",
+    topic: topic || "General",
+    scores: { afad: "-", arafat: "-", munna: "-", taky: "-" }
+  });
+
+  document.getElementById('cInputName').value = "";
+  document.getElementById('cInputDate').value = "";
+  document.getElementById('cInputTopic').value = "";
+
+  window.writeStateToDB();
+  showToast("Appended record into active matrix grid.");
 };
 
+window.deleteContestRow = async function(idx) {
+  const ok = await openCustomConfirm("Delete Row?", "Remove this contest ledger entry completely?", "");
+  if(!ok) return;
+  const activeCat = window.appState.activeContestCategory;
+  window.appState.contestCategories[activeCat].splice(idx, 1);
+  window.writeStateToDB();
+  showToast("Record row dropped.");
+};
+
+// CATEGORY MODAL OPENS
+window.openNewCategoryModal = function() {
+  document.getElementById('newCategoryNameInput').value = "";
+  document.getElementById('newCategoryModal').classList.remove('hidden');
+};
 document.getElementById('cancelCategoryModalBtn').addEventListener('click', () => {
   document.getElementById('newCategoryModal').classList.add('hidden');
 });
-
 document.getElementById('submitCategoryModalBtn').addEventListener('click', () => {
   const name = document.getElementById('newCategoryNameInput').value.trim();
-  if (!name) {
-    showToast("Please enter a valid unique name!", true);
-    return;
-  }
+  if (!name) { showToast("Category structure label cannot be blank!", true); return; }
+  if (window.appState.contestCategories[name]) { showToast("Category ledger label key already exists!", true); return; }
 
-  if (appState.contests.categories.includes(name)) {
-    showToast("This category already exists!", true);
-    return;
-  }
-
-  // Save new categories
-  appState.contests.categories.push(name);
-  appState.contests.data[name] = [];
-  appState.contests.activeCategory = name;
-
+  window.appState.contestCategories[name] = [];
+  window.appState.activeContestCategory = name;
   document.getElementById('newCategoryModal').classList.add('hidden');
-  document.getElementById('newCategoryNameInput').value = '';
-  
-  writeStateToDB();
-  showToast(`Successfully created ${name} contest section!`);
-  renderContestView();
+  window.writeStateToDB();
+  showToast(`Category [${name}] schema initialized.`);
 });
 
-// SELF SUBMIT MEMBER SCORE
-window.submitUserContestScore = function() {
-  const contestId = document.getElementById('userSubmitContestSelect').value;
-  const scoreVal = parseFloat(document.getElementById('userSubmittedScoreInput').value);
-
-  if (!contestId) {
-    showToast("Create a contest first before logging scores!", true);
+window.triggerDeleteCategory = async function() {
+  const activeCat = window.appState.activeContestCategory;
+  if (Object.keys(window.appState.contestCategories).length <= 1) {
+    showToast("Cannot delete the last remaining matrix schema category!", true);
     return;
   }
+  const ok = await openCustomConfirm(`Purge Section?`, `Drop whole category [${activeCat}]? Type: CONFIRM DELETE`, "CONFIRM DELETE");
+  if(!ok) return;
 
-  if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > 10) {
-    showToast("Score must be a number between 0 and 10!", true);
-    return;
-  }
-
-  const activeCat = appState.contests.activeCategory;
-  const contestList = appState.contests.data[activeCat] || [];
-  const contest = contestList.find(c => c.id === contestId);
-
-  if (!contest) {
-    showToast("Selected contest record was not found.", true);
-    return;
-  }
-
-  if (!contest.userSubmissions) contest.userSubmissions = {};
-  contest.userSubmissions[currentLoggedInUserId] = scoreVal;
-
-  writeStateToDB();
-  showToast("Your contest score saved. Rankings refreshed!");
-  renderContestView();
-  
-  document.getElementById('userSubmittedScoreInput').value = '';
+  delete window.appState.contestCategories[activeCat];
+  window.appState.activeContestCategory = Object.keys(window.appState.contestCategories)[0];
+  window.writeStateToDB();
+  showToast("Schema category section purged completely.");
 };
 
-// ADMIN PRIVILEGED CONTEST METHODS
-window.addNewContestToCategory = function() {
-  const name = document.getElementById('admNewContestName').value.trim();
-  const date = document.getElementById('admNewContestDate').value.trim();
-  const topic = document.getElementById('admNewContestTopic').value.trim();
+function renderRoadmapBlock() {
+  const container = document.getElementById('roadmapContainer');
+  if(!container) return;
+  container.innerHTML = '';
 
-  if (!name || !date || !topic) {
-    showToast("Please complete all fields (Name, Date, Topic)!", true);
-    return;
-  }
+  // গ্রুপিং বাই ইয়ার
+  const phases = {};
+  window.appState.roadmap.forEach(node => {
+    if(!phases[node.year]) phases[node.year] = [];
+    phases[node.year].push(node);
+  });
 
-  const activeCat = appState.contests.activeCategory;
-  const contestObj = {
-    id: `contest_${Date.now()}`,
-    name: name,
-    date: date,
-    topic: topic,
-    userSubmissions: { afad: null, arafat: null, munna: null, taky: null },
-    adminOverrides: { afad: null, arafat: null, munna: null, taky: null }
-  };
+  Object.entries(phases).forEach(([year, nodes]) => {
+    let nodesHTML = "";
+    nodes.forEach(n => {
+      let statusClass = "roadmap-item";
+      if(n.status === 'done') statusClass += " done-item";
+      else if(n.status === 'current') statusClass += " current-item";
 
-  appState.contests.data[activeCat].push(contestObj);
-  
-  writeStateToDB();
-  showToast(`Added ${name} to ${activeCat}!`);
-  renderContestView();
-
-  document.getElementById('admNewContestName').value = '';
-  document.getElementById('admNewContestDate').value = '';
-  document.getElementById('admNewContestTopic').value = '';
-};
-
-window.overrideMemberScore = function() {
-  const contestId = document.getElementById('admScoreOverrideContestSelect').value;
-  const userId = document.getElementById('admScoreOverrideUserSelect').value;
-  const scoreVal = parseFloat(document.getElementById('admScoreOverrideVal').value);
-
-  if (!contestId) {
-    showToast("No active contest available!", true);
-    return;
-  }
-
-  if (isNaN(scoreVal) || scoreVal < 0 || scoreVal > 10) {
-    showToast("Ensure overridden score is between 0 and 10!", true);
-    return;
-  }
-
-  const activeCat = appState.contests.activeCategory;
-  const contest = appState.contests.data[activeCat].find(c => c.id === contestId);
-
-  if (!contest) {
-    showToast("Target contest missing.", true);
-    return;
-  }
-
-  if (!contest.adminOverrides) contest.adminOverrides = {};
-  contest.adminOverrides[userId] = scoreVal;
-
-  writeStateToDB();
-  showToast(`Administrative priority score overridden for ${userId}!`);
-  renderContestView();
-
-  document.getElementById('admScoreOverrideVal').value = '';
-};
-
-window.clearOverrideScore = function() {
-  const contestId = document.getElementById('admScoreOverrideContestSelect').value;
-  const userId = document.getElementById('admScoreOverrideUserSelect').value;
-
-  if (!contestId) {
-    showToast("No active contest!", true);
-    return;
-  }
-
-  const activeCat = appState.contests.activeCategory;
-  const contest = appState.contests.data[activeCat].find(c => c.id === contestId);
-
-  if (contest && contest.adminOverrides) {
-    contest.adminOverrides[userId] = null;
-    writeStateToDB();
-    showToast(`Admin override cleared for ${userId}. Display falling back to self-submission.`);
-    renderContestView();
-  }
-};
-
-function renderContestLeaderboard() {
-  const el = document.getElementById('contestLeaderboard');
-  if(!el) return;
-  
-  const sorted = Object.values(appState.members).sort((a,b) => b.score - a.score);
-  const icons = ['🥇','🥈','🥉'];
-  el.innerHTML = sorted.map((m,i)=>`
-    <div class="lb-row">
-      <div class="lb-rank ${['rank-1','rank-2','rank-3','rank-other'][Math.min(i,3)]}">${icons[i]||'#'+(i+1)}</div>
-      <div class="lb-avatar ${m.color}">${m.name[0]}</div>
-      <div class="lb-info">
-        <div class="lb-name">${m.name}</div>
-        <div class="lb-sub">Global rating points: ${m.score} pts</div>
-      </div>
-      <div class="lb-right">
-        <div class="lb-score text-blue-600 font-mono">${m.solved} Solved</div>
-      </div>
-    </div>`).join('');
-}
-
-function renderRoadmap() {
-  const el = document.getElementById('roadmapContent');
-  if(!el) return;
-  el.innerHTML = appState.roadmap.map(y=>`
-    <div class="roadmap-year">
-      <div class="year-header"><span class="year-num">${y.year}</span><span class="year-title">${y.title}</span></div>
-      <div class="roadmap-items">${y.items.map(item=>`
-        <div class="roadmap-item ${item.done?'done-item':''} ${item.current?'current-item':''}">
-          ${item.done?'✅':item.current?'▶️':'⬜'} ${item.text}
-        </div>`).join('')}
-      </div>
-    </div>`).join('');
-  const t=document.getElementById('upcomingTopics');
-  if(t) t.innerHTML=appState.upcomingTopics.map(x=>`<div class="roadmap-item">${x}</div>`).join('');
-}
-
-function renderAdminView() {
-  document.getElementById('adminTopicInput').value = appState.currentTopic;
-  document.getElementById('adminWeekBadgeInput').value = appState.weekBadgeDate;
-  document.getElementById('adminWeekNumInput').value = appState.currentWeekNum;
-
-  const container = document.getElementById('adminUserPassRows');
-  const membersList = Object.values(appState.members);
-
-  container.innerHTML = membersList.map(m => `
-    <div class="p-3 bg-indigo-50/50 border border-indigo-100 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3">
-      <div class="flex items-center gap-2">
-        <span class="w-3 h-3 rounded-full dot-${m.id}"></span>
-        <div>
-          <span class="font-bold text-xs text-indigo-950">${m.name}</span>
-          <span class="text-[10px] text-slate-400 block">${m.email || 'No email registered'}</span>
+      nodesHTML += `
+        <div class="${statusClass} flex items-center gap-1.5">
+          ${currentLoggedInUserId === 'afad' && window.isAdminSessionVerified ? `<span class="cursor-pointer font-normal text-slate-400 hover:text-indigo-600" onclick="cycleRoadmapStatus('${n.id}')">🔄</span>` : ''}
+          <span>${n.title}</span>
+          ${currentLoggedInUserId === 'afad' && window.isAdminSessionVerified ? `<span class="cursor-pointer text-red-400 hover:text-red-600 ml-1" onclick="deleteRoadmapNode('${n.id}')">×</span>` : ''}
         </div>
+      `;
+    });
+
+    container.innerHTML += `
+      <div class="roadmap-year">
+        <div class="year-header">
+          <div class="year-num">${year}</div>
+        </div>
+        <div class="roadmap-items">${nodesHTML}</div>
       </div>
-      <div class="flex flex-col sm:flex-row gap-2">
-        <input type="email" id="admEmail-${m.id}" value="${m.email || ''}" placeholder="E-mail" class="px-2.5 py-1.5 border rounded-lg text-xs font-medium outline-none bg-white focus:ring-1 focus:ring-indigo-500">
-        <input type="text" id="admPass-${m.id}" value="${m.password || ''}" placeholder="Password" class="px-2.5 py-1.5 border rounded-lg text-xs font-mono outline-none bg-white focus:ring-1 focus:ring-indigo-500">
-      </div>
-    </div>
-  `).join('');
+    `;
+  });
 }
 
-window.saveAdminCredentials = function() {
-  const ids = ['afad', 'arafat', 'munna', 'taky'];
-  let err = false;
+window.addRoadmapNode = function() {
+  const yr = document.getElementById('roadmapYearInput').value.trim();
+  const title = document.getElementById('roadmapNodeInput').value.trim();
+  if(!yr || !title) { showToast("Both Phase timeline and Node strings required!", true); return; }
+
+  window.appState.roadmap.push({
+    id: "node" + Date.now(),
+    year: yr,
+    title: title,
+    status: "pending"
+  });
+  document.getElementById('roadmapNodeInput').value = "";
+  window.writeStateToDB();
+  showToast("Timeline node architecture updated.");
+};
+
+window.cycleRoadmapStatus = function(nodeId) {
+  const n = window.appState.roadmap.find(x => x.id === nodeId);
+  if(!n) return;
+  if(n.status === 'pending') n.status = 'current';
+  else if(n.status === 'current') n.status = 'done';
+  else n.status = 'pending';
+  window.writeStateToDB();
+};
+
+window.deleteRoadmapNode = function(nodeId) {
+  window.appState.roadmap = window.appState.roadmap.filter(x => x.id !== nodeId);
+  window.writeStateToDB();
+  showToast("Node dropped.");
+};
+
+// USER HUB STATS UPDATER
+window.updateMyStats = function() {
+  const sVal = parseInt(document.getElementById('mySolvedInput').value);
+  const stVal = parseInt(document.getElementById('myStreakInput').value);
+
+  if(isNaN(sVal) || isNaN(stVal) || sVal < 0 || stVal < 0) {
+    showToast("Stats matrices cannot contain negative integers or NaN!", true);
+    return;
+  }
+
+  window.appState.members[currentLoggedInUserId].solved = sVal;
+  window.appState.members[currentLoggedInUserId].streak = stVal;
   
-  ids.forEach(id => {
+  window.writeStateToDB();
+  showToast("Your progress matrix successfully synchronized to cloud model!");
+};
+
+// ADMIN VIEW SPECIFIC RENDERING
+window.renderAdminView = function() {
+  document.getElementById('adminTopicInput').value = window.appState.currentTopic;
+  document.getElementById('adminWeekBadgeInput').value = window.appState.weekBadgeDate;
+  document.getElementById('adminWeekNumInput').value = window.appState.currentWeekNum;
+
+  const keysWrap = document.getElementById('adminMemberKeysContainer');
+  if(!keysWrap) return;
+  keysWrap.innerHTML = '';
+
+  Object.entries(window.appState.members).forEach(([id, m]) => {
+    keysWrap.innerHTML += `
+      <div class="p-2 bg-slate-50 border rounded-lg text-xs space-y-1">
+        <div class="font-bold text-slate-700 flex items-center gap-1"><span class="dot ${m.dotColor}"></span> ${m.name}</div>
+        <input type="email" value="${m.email}" id="admEmail-${id}" placeholder="Email string" class="w-full p-1 border rounded bg-white">
+        <input type="text" value="${m.password}" id="admPass-${id}" placeholder="Password text" class="w-full p-1 border rounded bg-white font-mono">
+      </div>
+    `;
+  });
+};
+
+// ADMIN PARAMETERS REVISION APPLY
+window.applyAdminSettingsChanges = function() {
+  let err = false;
+  Object.keys(window.appState.members).forEach(id => {
     const email = document.getElementById(`admEmail-${id}`).value.trim();
     const pass = document.getElementById(`admPass-${id}`).value.trim();
-    
-    if(!email || !pass) {
-      err = true;
-    } else {
-      appState.members[id].email = email;
-      appState.members[id].password = pass;
+    if(!email || !pass) { err = true; }
+    else {
+      window.appState.members[id].email = email;
+      window.appState.members[id].password = pass;
     }
   });
 
@@ -1722,35 +1332,32 @@ window.saveAdminCredentials = function() {
     return;
   }
 
-  appState.currentTopic = document.getElementById('adminTopicInput').value.trim();
-  appState.weekBadgeDate = document.getElementById('adminWeekBadgeInput').value.trim();
-  appState.currentWeekNum = parseInt(document.getElementById('adminWeekNumInput').value) || 1;
+  window.appState.currentTopic = document.getElementById('adminTopicInput').value.trim();
+  window.appState.weekBadgeDate = document.getElementById('adminWeekBadgeInput').value.trim();
+  window.appState.currentWeekNum = parseInt(document.getElementById('adminWeekNumInput').value) || 1;
 
-  writeStateToDB();
+  window.writeStateToDB();
   showToast("Admin Panel changes applied successfully across all devices!");
-  renderAllViews();
-  renderAdminView();
 };
 
 window.postAdminAnnouncement = function() {
   const txt = document.getElementById('adminAnnounceText').value.trim();
   if(!txt) return;
-  appState.announcements.unshift({
+  window.appState.announcements.unshift({
     from: "📢 Admin (Afad)",
     text: txt,
     time: "Just Now"
   });
   document.getElementById('adminAnnounceText').value = '';
-  writeStateToDB();
+  window.writeStateToDB();
   showToast("Broadcasting announcement to all active dashboards!");
-  renderAllViews();
 };
 
-window.triggerResetSystem = function() {
-  const confirmation = prompt("To reset everything, write: CONFIRM RESET");
-  if (confirmation === "CONFIRM RESET") {
-    appState = JSON.parse(JSON.stringify(defaultState));
-    writeStateToDB();
+window.triggerResetSystem = async function() {
+  const confirmation = await openCustomConfirm("Format Global Cloud Tree?", "This action completely factory resets the Firebase cloud model tree. Write: CONFIRM RESET", "CONFIRM RESET");
+  if (confirmation) {
+    window.appState = JSON.parse(JSON.stringify(window.defaultState));
+    window.writeStateToDB();
     showToast("Entire cloud model initialized to defaults. Running Setup.");
     setTimeout(() => window.location.reload(), 1000);
   } else {
@@ -1758,8 +1365,158 @@ window.triggerResetSystem = function() {
   }
 };
 
-window.onload = function() {
-  initializeAppPortal();
+// ADMIN ACCESS GATEWAY CONTROLS
+window.tryOpenAdmin = function(tabEl) {
+  if(currentLoggedInUserId !== 'afad') {
+    showToast("Access Denied: Only Afad retains root administration keys!", true);
+    return;
+  }
+  if(window.isAdminSessionVerified) {
+    window.showPage('admin', tabEl);
+    window.renderAdminView();
+    return;
+  }
+  document.getElementById('adminVerifyPassInput').value = "";
+  document.getElementById('adminAuthModal').classList.remove('hidden');
+};
+
+document.getElementById('cancelAdminAuthBtn').addEventListener('click', () => {
+  document.getElementById('adminAuthModal').classList.add('hidden');
+});
+document.getElementById('submitAdminAuthBtn').addEventListener('click', () => {
+  const p = document.getElementById('adminVerifyPassInput').value.trim();
+  if(p === 'spider123') {
+    window.isAdminSessionVerified = true;
+    document.getElementById('adminAuthModal').classList.add('hidden');
+    showToast("Root Session Key authorization valid.");
+    
+    const adminTabBtn = document.querySelector("button[onclick*='tryOpenAdmin']");
+    window.showPage('admin', adminTabBtn);
+    window.renderAdminView();
+  } else {
+    showToast("Authorization key signature mismatch!", true);
+  }
+});
+
+// COMPREHENSIVE AUTHENTICATION SUBSYSTEM INITIALIZATION
+window.initializeAppPortal = function() {
+  // সিঙ্ক লুপ চলাকালীন সময়ে ইন্টারফেস লোডিং টেক্সট ব্লক করে রাখবে
+  if(window.appState && window.appState.initialized) {
+    document.getElementById('loginSubtitle').innerText = "Database Active. Authenticate credentials.";
+  } else {
+    document.getElementById('loginSubtitle').innerText = "System uninitialized. First time Admin setup required.";
+  }
+};
+
+// SETUP PROCESS COMPLETION
+document.getElementById('submitSetupBtn').addEventListener('click', () => {
+  const state = window.appState;
+  let hasEmpty = false;
+
+  ['afad', 'arafat', 'munna', 'taky'].forEach(id => {
+    const email = document.getElementById(`regEmail-${id}`).value.trim();
+    const pass = document.getElementById(`regPass-${id}`).value.trim();
+    if(!email || !pass) hasEmpty = true;
+    state.members[id].email = email;
+    state.members[id].password = pass;
+  });
+
+  if(hasEmpty) {
+    showToast("All registration profiles require non-empty credential values!", true);
+    return;
+  }
+
+  state.initialized = true;
+  document.getElementById('setupModal').classList.add('hidden');
+  document.getElementById('loginOverlay').classList.remove('hidden');
+  
+  window.writeStateToDB();
+  showToast("Application Matrix Core Initialized successfully.");
+});
+
+// LOG-IN INTERFACE TRIGGER
+document.getElementById('loginSubmitBtn').addEventListener('click', () => {
+  const user = document.getElementById('loginUserSelect').value;
+  const pass = document.getElementById('loginPassword').value.trim();
+
+  if (!window.appState.initialized) {
+    if (user === 'afad') {
+      if (pass === 'spider123') {
+        document.getElementById('loginOverlay').classList.add('hidden');
+        document.getElementById('setupModal').classList.remove('hidden');
+        document.getElementById('loginPassword').value = '';
+        showToast("Security Interface unlocked.");
+      } else {
+        showToast("Incorrect Preview Password!", true);
+      }
+    } else {
+      showToast("App is uninitialized. Afad must log in first with master key to setup.", true);
+    }
+    return;
+  }
+
+  const email = document.getElementById('loginEmail').value.trim();
+  const profile = window.appState.members[user];
+  if (profile && profile.email.toLowerCase() === email.toLowerCase() && profile.password === pass) {
+    currentLoggedInUserId = user;
+    sessionStorage.setItem('tc_user', user);
+    
+    showToast(`Welcome back, ${profile.name}!`);
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginOverlay').classList.add('hidden');
+    
+    if (user === 'afad') {
+      window.isAdminSessionVerified = true;
+    }
+    
+    // লোকাল স্ট্যাট ইনপুট বক্সে ডিফল্ট ভ্যালু সেট করা
+    document.getElementById('mySolvedInput').value = profile.solved || 0;
+    document.getElementById('myStreakInput').value = profile.streak || 0;
+    
+    window.renderAllViews();
+  } else {
+    showToast("Invalid credentials matrix match!", true);
+  }
+});
+
+window.logout = function() {
+  sessionStorage.removeItem('tc_user');
+  currentLoggedInUserId = null;
+  window.isAdminSessionVerified = false;
+  
+  // অ্যাডমিন সেটিংস বক্সগুলো হাইড করা
+  document.getElementById('newCategoryTriggerBtn').classList.add('hidden');
+  document.getElementById('adminContestActionBox').classList.add('hidden');
+  document.getElementById('adminCategoryDeleteBox').classList.add('hidden');
+  document.getElementById('adminRoadmapActionBox').classList.add('hidden');
+  
+  document.getElementById('loginOverlay').classList.remove('hidden');
+  showPage('dashboard', document.querySelector('.nav-tab'));
+  showToast("Session signed out successfully.");
+};
+
+window.onload = () => {
+  window.initializeAppPortal();
+  
+  // সেশন রিকভারি চেক
+  const savedUser = sessionStorage.getItem('tc_user');
+  if(savedUser && window.appState && window.appState.initialized) {
+    // ফায়ারবেস থেকে ডেটা লোড হওয়ার জন্য একটু সময় দেওয়া
+    setTimeout(() => {
+      if(window.appState.members && window.appState.members[savedUser]) {
+        currentLoggedInUserId = savedUser;
+        if(savedUser === 'afad') window.isAdminSessionVerified = true;
+        document.getElementById('loginOverlay').classList.add('hidden');
+        
+        const profile = window.appState.members[savedUser];
+        document.getElementById('mySolvedInput').value = profile.solved || 0;
+        document.getElementById('myStreakInput').value = profile.streak || 0;
+        
+        window.renderAllViews();
+      }
+    }, 1500);
+  }
 };
 </script>
 </body>
