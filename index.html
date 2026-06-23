@@ -278,71 +278,13 @@
     .progress-bar-wrap { display: none; }
   }
 </style>
-
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-  import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
-
-  // আপনার দেওয়া ফায়ারবেস কনফিগারেশন কীসমূহ
-  const firebaseConfig = {
-    apiKey: "AIzaSyBeDc-RSfP330E0ULDDC05fqJHCn2ZzitI",
-    authDomain: "teamtc.firebaseapp.com",
-    databaseURL: "https://teamtc-default-rtdb.firebaseio.com",
-    projectId: "teamtc",
-    storageBucket: "teamtc.firebasestorage.app",
-    messagingSenderId: "613788760029",
-    appId: "1:613788760029:web:cdb1b496a4f6fb9cd96834"
-  };
-
-  // Firebase ইনিশিয়ালাইজেশন
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
-
-  // গ্লোবাল উইন্ডো ফাংশন তৈরি করা যাতে পুরো স্ক্রিপ্ট থেকে ডাটাবেসে রাইট করা যায়
-  window.writeStateToDB = function() {
-    if (window.appState) {
-      set(ref(db, 'appState'), window.appState)
-        .catch(error => console.error("Database sync failed:", error));
-    }
-  };
-
-  // রিয়েলটাইম লিসেনার: ডাটাবেসে যেকোনো পরিবর্তন হলে সাথে সাথে সবার অ্যাপ অটো-আপডেট হবে
-  const appStateRef = ref(db, 'appState');
-  onValue(appStateRef, (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      window.appState = data;
-      // একটি ছোট ইন্ডিকেটর লাইভ স্টেট বোঝানোর জন্য (সবুজ রঙ)
-      const dot = document.getElementById('activeDot');
-      if(dot) { dot.style.backgroundColor = '#059669'; }
-      
-      // অ্যাপ ইন্টারফেস রেন্ডার করা
-      if (typeof window.renderAllViews === "function") {
-        window.renderAllViews();
-      }
-      if (typeof window.renderAdminView === "function" && window.isAdminSessionVerified) {
-        window.renderAdminView();
-      }
-    } else {
-      // যদি ডাটাবেস সম্পূর্ণ খালি থাকে, তবে ডিফল্ট স্টেট দিয়ে ইনিশিয়ালাইজ করবে
-      if (window.defaultState && !window.appState?.initialized) {
-        window.appState = JSON.parse(JSON.stringify(window.defaultState));
-        window.writeStateToDB();
-      }
-    }
-  }, (error) => {
-    console.error("Firebase connection error:", error);
-    // অফলাইন ইন্ডিকেটর (ধূসর রঙ)
-    const dot = document.getElementById('activeDot');
-    if(dot) { dot.style.backgroundColor = '#94a3b8'; }
-  });
-</script>
 </head>
 <body class="bg-slate-50 text-slate-800">
 
 <div id="toastContainer" class="fixed top-4 right-4 z-[9999] flex flex-col gap-2"></div>
 
 
+<!-- INITIALIZATION/SETUP MODAL -->
 <div id="setupModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-[1000] flex items-center justify-center p-4 hidden">
   <div class="glass-card w-full max-w-xl rounded-2xl p-8 max-h-[90vh] overflow-y-auto">
     <div class="text-center mb-6">
@@ -360,35 +302,39 @@
 
       <h3 class="font-bold text-slate-700 text-sm border-b pb-1">Register Members Logins:</h3>
       
+      <!-- Afad Registration row -->
       <div class="p-3 bg-white border rounded-xl space-y-2">
         <div class="flex items-center gap-2"><span class="dot dot-afad"></span><span class="font-bold text-sm text-slate-700">Afad (Me / Admin)</span></div>
         <div class="grid grid-cols-2 gap-2">
           <input type="email" id="regEmail-afad" placeholder="afad@email.com" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500">
-          <input type="password" id="regPass-afad" placeholder="Afad password" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500 font-mono">
+          <input type="password" id="regPass-afad" placeholder="Afad password" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500 font-mono font-bold">
         </div>
       </div>
 
+      <!-- Arafat Registration row -->
       <div class="p-3 bg-white border rounded-xl space-y-2">
         <div class="flex items-center gap-2"><span class="dot dot-arafat"></span><span class="font-bold text-sm text-slate-700">Arafat</span></div>
         <div class="grid grid-cols-2 gap-2">
           <input type="email" id="regEmail-arafat" placeholder="arafat@email.com" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500">
-          <input type="password" id="regPass-arafat" placeholder="Arafat password" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500 font-mono">
+          <input type="password" id="regPass-arafat" placeholder="Arafat password" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500 font-mono font-bold">
         </div>
       </div>
 
+      <!-- Munna Registration row -->
       <div class="p-3 bg-white border rounded-xl space-y-2">
         <div class="flex items-center gap-2"><span class="dot dot-munna"></span><span class="font-bold text-sm text-slate-700">Munna</span></div>
         <div class="grid grid-cols-2 gap-2">
           <input type="email" id="regEmail-munna" placeholder="munna@email.com" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500">
-          <input type="password" id="regPass-munna" placeholder="Munna password" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500 font-mono">
+          <input type="password" id="regPass-munna" placeholder="Munna password" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500 font-mono font-bold">
         </div>
       </div>
 
+      <!-- Taky Registration row -->
       <div class="p-3 bg-white border rounded-xl space-y-2">
         <div class="flex items-center gap-2"><span class="dot dot-taky"></span><span class="font-bold text-sm text-slate-700">Taky</span></div>
         <div class="grid grid-cols-2 gap-2">
           <input type="email" id="regEmail-taky" placeholder="taky@email.com" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500">
-          <input type="password" id="regPass-taky" placeholder="Taky password" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500 font-mono">
+          <input type="password" id="regPass-taky" placeholder="Taky password" class="px-3 py-1.5 border rounded text-xs outline-none focus:ring-1 focus:ring-blue-500 font-mono font-bold">
         </div>
       </div>
 
@@ -400,6 +346,7 @@
 </div>
 
 
+<!-- SIGN IN OVERLAY -->
 <div id="loginOverlay" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[900] flex items-center justify-center p-4">
   <div class="glass-card w-full max-w-md rounded-2xl p-8 shadow-2xl relative">
     <div class="text-center mb-6">
@@ -438,6 +385,7 @@
 </div>
 
 
+<!-- ADMIN VERIFICATION PROMPT -->
 <div id="adminAuthModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1100] flex items-center justify-center p-4 hidden">
   <div class="glass-card w-full max-w-sm rounded-xl p-6 shadow-2xl">
     <div class="text-center mb-4">
@@ -455,6 +403,7 @@
   </div>
 </div>
 
+<!-- CUSTOM DIALOG DIALOGUE (REPLACING NATIVE CONFIRM) -->
 <div id="confirmModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1200] flex items-center justify-center p-4 hidden">
   <div class="glass-card w-full max-w-sm rounded-xl p-6 shadow-2xl">
     <div class="text-center mb-4">
@@ -470,6 +419,7 @@
   </div>
 </div>
 
+<!-- NEW CONTEST CATEGORY DYNAMIC FORM MODAL -->
 <div id="newCategoryModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[1100] flex items-center justify-center p-4 hidden">
   <div class="glass-card w-full max-w-sm rounded-xl p-6 shadow-2xl">
     <div class="text-center mb-4">
@@ -487,6 +437,7 @@
   </div>
 </div>
 
+<!-- MAIN WORKSPACE NAVIGATION -->
 <nav>
   <div class="logo">TEAM<span> TC</span></div>
   <div class="nav-tabs">
@@ -513,8 +464,10 @@
 </nav>
 
 
+<!-- DASHBOARD PAGE -->
 <div class="page active" id="page-dashboard">
   <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+    <!-- HERO -->
     <div class="hero lg:col-span-3">
       <div class="hero-top">
         <div>
@@ -534,6 +487,7 @@
       </div>
     </div>
 
+    <!-- PERSONAL HUB CARD -->
     <div class="card border-blue-100 bg-gradient-to-b from-blue-50/50 to-indigo-50/50 flex flex-col justify-between">
       <div>
         <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">My Daily Hub</h4>
@@ -570,13 +524,13 @@
   <div id="announcementsList" class="space-y-2"></div>
 </div>
 
-
+<!-- MEMBERS PAGE -->
 <div class="page" id="page-members">
   <div class="section-title">All Members</div>
   <div class="grid-2" id="memberCards"></div>
 </div>
 
-
+<!-- TARGETS PAGE -->
 <div class="page" id="page-targets">
   <div class="section-title" id="weekTargetsTitle">Week Targets</div>
   <div class="grid-2">
@@ -589,7 +543,6 @@
       <div id="practiceTasks"></div>
     </div>
   </div>
-  
   <div style="margin-top:14px;" class="grid-2">
     <div class="target-card">
       <div class="target-header"><div class="target-title">⚔️ Contest Day (Day 6)</div></div>
@@ -600,14 +553,15 @@
       <div id="reviewTasks"></div>
     </div>
   </div>
-
   <div class="section-title" style="margin-top:26px;">Member Progress This Week</div>
   <div class="card"><div id="memberProgress"></div></div>
 </div>
 
 
+<!-- CONTESTS PAGE -->
 <div class="page" id="page-contests">
   <div class="section-title">Contest Management & Categorization</div>
+  
   <div class="flex flex-wrap items-center gap-2 mb-6">
     <div id="contestCategoriesContainer" class="flex flex-wrap gap-2"></div>
     <button id="newCategoryTriggerBtn" class="px-4 py-2 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 transition text-xs font-bold hidden items-center gap-1.5" onclick="openNewCategoryModal()">
@@ -637,98 +591,172 @@
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-    <div class="card border border-slate-200 shadow-sm hidden" id="adminContestActionBox">
-      <h4 class="font-bold text-sm text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1">🛠️ Append Row to <span id="actionBoxCategoryName" class="text-blue-600 normal-case ml-1">...</span></h4>
-      <div class="grid grid-cols-3 gap-2">
-        <input type="text" id="cInputName" placeholder="Contest Name" class="px-3 py-2 border rounded text-xs outline-none focus:border-blue-500">
-        <input type="text" id="cInputDate" placeholder="Date (e.g., Oct 24)" class="px-3 py-2 border rounded text-xs outline-none focus:border-blue-500">
-        <input type="text" id="cInputTopic" placeholder="Topic Context" class="px-3 py-2 border rounded text-xs outline-none focus:border-blue-500">
-      </div>
-      <button onclick="addContestRow()" class="w-full mt-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-sm">
-        Add Record Entry
-      </button>
-    </div>
-
-    <div class="card border border-red-100 bg-red-50/20 hidden" id="adminCategoryDeleteBox">
-      <h4 class="font-bold text-sm text-red-700 uppercase tracking-wider mb-2">⚠️ Section Lifecycle Control</h4>
-      <p class="text-[11px] text-slate-500 mb-3">Deleting a category instantly drops its database structure entirely across all connected synchronization channels.</p>
-      <button onclick="triggerDeleteCategory()" class="px-4 py-2 border border-red-200 hover:bg-red-50 text-red-600 rounded-lg text-xs font-bold transition flex items-center gap-1">
-        🗑️ Purge Active Category Section
-      </button>
-    </div>
-  </div>
-</div>
-
-
-<div class="page" id="page-roadmap">
-  <div class="section-title">Long-term Educational Path Architecture</div>
-  <div id="roadmapContainer"></div>
-
-  <div class="card mt-4 border border-indigo-100 bg-indigo-50/20 hidden" id="adminRoadmapActionBox">
-    <h4 class="font-bold text-sm text-indigo-900 mb-2">🗺️ Append New Nodes onto Timeline</h4>
-    <div class="flex flex-wrap gap-2">
-      <input type="text" id="roadmapYearInput" placeholder="Phase (e.g. Year 1 / Term 2)" class="px-3 py-2 border rounded text-xs outline-none focus:border-indigo-500 w-44">
-      <input type="text" id="roadmapNodeInput" placeholder="Skill node description (e.g., Graph Algorithms)" class="flex-1 px-3 py-2 border rounded text-xs outline-none focus:border-indigo-500 min-w-[200px]">
-      <button onclick="addRoadmapNode()" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition">
-        Append Node
-      </button>
-    </div>
-  </div>
-</div>
-
-
-<div class="page" id="page-admin">
-  <div class="hero bg-gradient-to-r from-indigo-900 to-slate-900 border-b-4 border-indigo-500 mb-6">
-    <div class="hero-top">
-      <div>
-        <h1 class="text-xl">System Management <span>Console 🛡️</span></h1>
-        <p class="text-xs text-indigo-200 mt-1">Global administrative synchronization deck. Controlled by Afad.</p>
-      </div>
-      <span class="text-xs bg-indigo-500/30 text-indigo-300 font-mono px-3 py-1 rounded border border-indigo-500/50">Root Session</span>
-    </div>
-  </div>
-
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <div class="card lg:col-span-2 space-y-4">
-      <h3 class="font-bold text-slate-800 text-base border-b pb-1">System Core Configurations</h3>
+    <div class="card border border-slate-200 bg-white">
+      <h4 class="font-bold text-sm text-slate-800 uppercase tracking-wider mb-2 flex items-center gap-1.5 text-blue-600">
+        📝 Report Your Contest Score
+      </h4>
+      <p class="text-xs text-slate-500 mb-4">Submit your authentic score out of 10. Admin override values take absolute precedence.</p>
       
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div class="space-y-3">
         <div>
-          <label class="block text-[11px] font-bold text-slate-500 mb-1">Global Topic Context</label>
-          <input type="text" id="adminTopicInput" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:border-indigo-500 font-medium">
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Select Contest</label>
+          <select id="userSubmitContestSelect" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500 bg-white"></select>
         </div>
         <div>
-          <label class="block text-[11px] font-bold text-slate-500 mb-1">Week Badge Timeline</label>
-          <input type="text" id="adminWeekBadgeInput" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:border-indigo-500 font-medium">
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Your Score (Out of 10)</label>
+          <input type="number" id="userSubmittedScoreInput" min="0" max="10" step="0.5" placeholder="e.g. 8.5" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-blue-500">
         </div>
-        <div>
-          <label class="block text-[11px] font-bold text-slate-500 mb-1">Current Iteration Week</label>
-          <input type="number" id="adminWeekNumInput" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:border-indigo-500 font-mono">
-        </div>
-      </div>
-
-      <h4 class="font-bold text-slate-700 text-xs mt-4">Revise Registered Access Keys:</h4>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="adminMemberKeysContainer"></div>
-
-      <button onclick="applyAdminSettingsChanges()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition shadow">
-        Broadcast Parameters Across Connected Engines
-      </button>
-    </div>
-
-    <div class="space-y-4">
-      <div class="card">
-        <h3 class="font-bold text-slate-800 text-sm mb-2">📢 Dispatch Urgent Announcement</h3>
-        <textarea id="adminAnnounceText" rows="3" placeholder="Broadcast notification to active sessions..." class="w-full p-3 border rounded-lg text-xs outline-none focus:border-indigo-500 resize-none"></textarea>
-        <button onclick="postAdminAnnouncement()" class="w-full mt-2 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition">
-          Transmit Broadcast Signal
+        <button onclick="submitUserContestScore()" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition">
+          Save Score Record
         </button>
       </div>
+    </div>
 
-      <div class="card border-red-200 bg-red-50/10">
-        <h3 class="font-bold text-red-800 text-sm mb-1">☢️ Hard reset operation</h3>
-        <p class="text-[10px] text-slate-400 mb-3">Re-initializes the global storage tree architecture completely to empty factory default states instantly.</p>
-        <button onclick="triggerResetSystem()" class="w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition">
-          Format Global Architecture Tree
+    <div id="directAdminContestPanel" class="card border border-indigo-200 bg-gradient-to-br from-slate-50 to-indigo-50 hidden">
+      <div class="flex justify-between items-center border-b pb-2 mb-3">
+        <h4 class="font-bold text-sm text-indigo-900 uppercase tracking-wider flex items-center gap-1.5">
+          🛡️ Admin Contest Control Center
+        </h4>
+        <span class="text-[9px] px-1.5 py-0.5 bg-indigo-600 text-white font-bold rounded uppercase">Afad's Console</span>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <h5 class="text-xs font-bold text-slate-700 mb-2">➕ Add New Contest to this Section</h5>
+          <div class="grid grid-cols-2 gap-2 mb-2">
+            <input type="text" id="admNewContestName" placeholder="Contest #2" class="px-2.5 py-1.5 border rounded-lg text-xs bg-white">
+            <input type="text" id="admNewContestDate" placeholder="Week 1 - Day 6" class="px-2.5 py-1.5 border rounded-lg text-xs bg-white">
+          </div>
+          <div class="flex gap-2">
+            <input type="text" id="admNewContestTopic" placeholder="Topic: Functions & Pointers" class="flex-1 px-2.5 py-1.5 border rounded-lg text-xs bg-white">
+            <button onclick="addNewContestToCategory()" class="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition">
+              Create
+            </button>
+          </div>
+        </div>
+
+        <div class="border-t pt-3">
+          <h5 class="text-xs font-bold text-slate-700 mb-2">✏️ Override / Set Member Scores</h5>
+          <div class="grid grid-cols-3 gap-2 mb-2">
+            <div>
+              <label class="block text-[9px] text-slate-400 mb-0.5">Contest</label>
+              <select id="admScoreOverrideContestSelect" class="w-full px-2 py-1.5 border rounded text-xs bg-white"></select>
+            </div>
+            <div>
+              <label class="block text-[9px] text-slate-400 mb-0.5">Member</label>
+              <select id="admScoreOverrideUserSelect" class="w-full px-2 py-1.5 border rounded text-xs bg-white">
+                <option value="afad">Afad</option>
+                <option value="arafat">Arafat</option>
+                <option value="munna">Munna</option>
+                <option value="taky">Taky</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[9px] text-slate-400 mb-0.5">Score (Max 10)</label>
+              <input type="number" id="admScoreOverrideVal" min="0" max="10" step="0.5" placeholder="Score" class="w-full px-2 py-1.5 border rounded text-xs bg-white">
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="overrideMemberScore()" class="w-full py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded text-xs font-bold transition">
+              Apply Override
+            </button>
+            <button onclick="clearOverrideScore()" class="py-1.5 px-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded text-xs font-medium transition">
+              Reset
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">All-Time Contest Rankings</div>
+  <div class="leaderboard" id="contestLeaderboard"></div>
+</div>
+
+
+<!-- ROADMAP PAGE -->
+<div class="page" id="page-roadmap">
+  <div class="section-title">4-Year CSE Roadmap</div>
+  <div id="roadmapContent"></div>
+  <div class="section-title">Upcoming Topics</div>
+  <div class="card"><div style="display:flex;flex-wrap:wrap;gap:8px;" id="upcomingTopics"></div></div>
+</div>
+
+<!-- ADMIN CONTROL PANEL PAGE -->
+<div class="page" id="page-admin">
+  <div class="hero bg-gradient-to-r from-slate-900 to-indigo-950 p-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-xl font-bold flex items-center gap-2">🛡️ Team TC — Controller Center</h1>
+        <p class="text-xs text-indigo-200 mt-1">Hello, Afad. Reset member passwords, change topic schedules, edit announcements, and manage team details.</p>
+      </div>
+      <div class="px-3 py-1 bg-red-600 text-[10px] uppercase font-bold tracking-wider rounded-full">Secure Session</div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+    <div class="card border border-indigo-100 flex flex-col justify-between">
+      <div>
+        <h3 class="font-bold text-slate-800 text-sm border-b pb-2 mb-4 flex items-center gap-1.5 text-indigo-600">
+          🔐 Manage Member Credentials
+        </h3>
+        <div class="space-y-3">
+          <div id="adminUserPassRows" class="space-y-3"></div>
+        </div>
+      </div>
+      <div class="pt-4 border-t mt-4 flex justify-between items-center">
+        <p class="text-[10px] text-slate-400">Remember to notify members of updated credentials.</p>
+        <button onclick="saveAdminCredentials()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition">
+          Update Credentials
+        </button>
+      </div>
+    </div>
+
+    <div class="card border border-indigo-100 space-y-4">
+      <h3 class="font-bold text-slate-800 text-sm border-b pb-2 flex items-center gap-1.5 text-indigo-600">
+        🛡️ Master Admin Credentials
+      </h3>
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Master Password Status</label>
+        <div class="flex gap-2">
+          <input type="password" value="spider123" class="flex-1 px-3 py-2 border rounded-lg text-xs bg-slate-100 outline-none font-mono text-slate-500 cursor-not-allowed" readonly>
+          <span class="px-3 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-xs rounded-lg font-mono">FIXED spider123</span>
+        </div>
+      </div>
+
+      <h3 class="font-bold text-slate-800 text-sm border-b pb-2 flex items-center gap-1.5 text-indigo-600 mt-6">
+        📢 Post Announcements & Set Topics
+      </h3>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Current Topic</label>
+          <input type="text" id="adminTopicInput" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-indigo-500">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Week badge date (or "Auto")</label>
+          <input type="text" id="adminWeekBadgeInput" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-indigo-500">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Current Week Number</label>
+          <input type="number" id="adminWeekNumInput" class="w-full px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-indigo-500">
+        </div>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Post New Announcement</label>
+        <div class="flex gap-2">
+          <input type="text" id="adminAnnounceText" placeholder="Welcome to the next level of Arrays!" class="flex-1 px-3 py-2 border rounded-lg text-xs outline-none focus:ring-1 focus:ring-indigo-500">
+          <button onclick="postAdminAnnouncement()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition">Post</button>
+        </div>
+      </div>
+      <div class="bg-red-50 border border-red-200 p-3 rounded-lg flex items-center justify-between mt-4">
+        <div>
+          <h4 class="text-xs font-bold text-red-800">Dangerous Operations</h4>
+          <p class="text-[9px] text-red-600">Completely reset the learning tracker's cloud records.</p>
+        </div>
+        <button onclick="triggerResetSystem()" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-bold transition">
+          Wipe Database
         </button>
       </div>
     </div>
@@ -736,204 +764,363 @@
 </div>
 
 
-<script>
-// ডিফল্ট স্টেট অবজেক্ট
-const defaultState = {
-  initialized: false,
-  currentTopic: "Introduction to C & Flowcharts",
-  weekBadgeDate: "Oct 20 — Oct 26",
-  currentWeekNum: 1,
-  announcements: [
-    { from: "📢 Admin (Afad)", text: "Welcome to Team TC Learning Portal! Configure setup to activate sync model.", time: "System Boot" }
-  ],
-  members: {
-    afad: { name: "Afad", role: "Web Dev - Admin", email: "", password: "", solved: 0, streak: 0, avatarColor: "color-afad", dotColor: "dot-afad" },
-    arafat: { name: "Arafat", role: "AI/ML Enthusiast", email: "", password: "", solved: 0, streak: 0, avatarColor: "color-arafat", dotColor: "dot-arafat" },
-    munna: { name: "Munna", role: "App Developer", email: "", password: "", solved: 0, streak: 0, avatarColor: "color-munna", dotColor: "dot-munna" },
-    taky: { name: "Taky", role: "Cybersecurity Analyst", email: "", password: "", solved: 0, streak: 0, avatarColor: "color-taky", dotColor: "dot-taky" }
-  },
-  targets: {
-    learn: [
-      { id: "l1", text: "Watch Module 1 & 2 video materials", doneBy: [] },
-      { id: "l2", text: "Read standard textbook chapters 1-3", doneBy: [] }
-    ],
-    practice: [
-      { id: "p1", text: "Complete 5 basic problem set items", doneBy: [] },
-      { id: "p2", text: "Debug flow control conditional algorithms", doneBy: [] }
-    ],
-    contest: [
-      { id: "c1", text: "Participate in Weekly Virtual Contest", doneBy: [] }
-    ],
-    review: [
-      { id: "r1", text: "Analyze missed submissions and optimize code", doneBy: [] }
-    ]
-  },
-  contestCategories: {
-    "Weekly Contest Series": [
-      { id: "row1", name: "TC Contest #01", date: "Oct 25", topic: "Variables & IO", scores: { afad: "-", arafat: "-", munna: "-", taky: "-" } }
-    ]
-  },
-  activeContestCategory: "Weekly Contest Series",
-  roadmap: [
-    { id: "rm1", year: "Year 1 / Term 1", title: "Structured Programming Basics", status: "current" },
-    { id: "rm2", year: "Year 1 / Term 2", title: "Object Oriented Principles", status: "pending" },
-    { id: "rm3", year: "Year 2 / Term 1", title: "Data Structures & Analyzing Algorithms", status: "pending" }
-  ]
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'team-tc-tracker-2026';
+const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+  apiKey: "",
+  authDomain: "unconfigured.firebaseapp.com",
+  projectId: "unconfigured"
 };
 
-// গ্লোবাল স্টেট ইন্টিগ্রেশন (Firebase অন লোডে আপডেট করবে)
-window.appState = JSON.parse(JSON.stringify(defaultState));
-window.defaultState = defaultState;
+const hasActualFirebase = firebaseConfig.apiKey !== "";
+let db, auth;
 
+let appState = null;
 let currentLoggedInUserId = null;
-window.isAdminSessionVerified = false;
+let isAdminSessionVerified = false;
 
-// TOAST ENGINE MODULE
+// Custom Confirmation Dialog Controller variables
+let currentConfirmAction = null;
+
+const defaultState = {
+  initialized: false,
+  adminPassword: "spider123",
+  currentTopic: "C Language — Arrays",
+  currentWeekNum: 1,
+  weekBadgeDate: "Auto",
+  members: {
+    afad: { id:'afad',   name:'Afad',   email:'', password:'', color:'color-afad',   dot:'dot-afad',   specialization:'Web Dev',      solved:0, streak:0, score:0, weekProgress:0, badges:['🌟 Newcomer'], topics:['C Basics'] },
+    arafat: { id:'arafat', name:'Arafat', email:'', password:'', color:'color-arafat', dot:'dot-arafat', specialization:'AI/ML',        solved:0, streak:0, score:0, weekProgress:0, badges:['🌟 Newcomer'], topics:['C Basics'] },
+    munna: { id:'munna',  name:'Munna',  email:'', password:'', color:'color-munna',  dot:'dot-munna',  specialization:'App Dev',      solved:0, streak:0, score:0, weekProgress:0, badges:['🌟 Newcomer'], topics:['C Basics'] },
+    taky: { id:'taky',   name:'Taky',   email:'', password:'', color:'color-taky',   dot:'dot-taky',   specialization:'Cybersecurity',solved:0, streak:0, score:0, weekProgress:0, badges:['🌟 Newcomer'], topics:['C Basics'] },
+  },
+  taskState: {},
+  tasks: {
+    learn: [
+      { text:'What is an Array? Declaration & Initialization', who:'All' },
+      { text:'1D Array: input, output, traversal', who:'All' },
+      { text:'Array operations: search, insert, delete', who:'All' },
+      { text:'Pass array to function', who:'All' },
+      { text:'2D Array basics (matrix)', who:'All' },
+    ],
+    practice: [
+      { text:'Find max & min in array', who:'All' },
+      { text:'Reverse an array', who:'All' },
+      { text:'Sum and average of array elements', who:'All' },
+      { text:'Check if array is sorted', who:'All' },
+      { text:'Count even & odd numbers', who:'All' },
+    ],
+    contest: [
+      { text:'Mini contest: 3 array problems (60 min)', who:'All' },
+      { text:'Submit on any judge or paper', who:'All' },
+      { text:'Record score & rank', who:'All' },
+    ],
+    review: [
+      { text:'Each person explains one concept to the group', who:'All' },
+      { text:'Note down mistakes from contest', who:'All' },
+      { text:'Plan next week: Strings in C', who:'All' },
+      { text:'Update tracker scores', who:'All' },
+    ]
+  },
+  contests: {
+    categories: ["Virtual Contest", "Private Contest", "Group Contest"],
+    activeCategory: "Group Contest",
+    data: {
+      "Virtual Contest": [],
+      "Private Contest": [],
+      "Group Contest": [
+        {
+          id: "contest_1",
+          name: "Contest #1",
+          date: "Week 1 - Day 6",
+          topic: "C Arrays",
+          userSubmissions: { afad: null, arafat: null, munna: null, taky: null },
+          adminOverrides: { afad: null, arafat: null, munna: null, taky: null }
+        }
+      ]
+    }
+  },
+  announcements: [
+    { from: "🎉 Team TC", text: "Welcome to the tracker! Week 1 starts now. Let's go! 💪", time: "Today" },
+  ],
+  roadmap: [
+    { year:'Year 1', title:'Foundation', items:[
+      {text:'C Language',done:true},{text:'C Arrays',current:true},{text:'C Strings',done:false},
+      {text:'C Pointers',done:false}
+    ]}
+  ],
+  upcomingTopics: ['📝 Strings in C','🔗 Pointers','🗂️ Structures']
+};
+
 function showToast(message, isError = false) {
   const container = document.getElementById('toastContainer');
-  if(!container) return;
   const toast = document.createElement('div');
-  toast.className = `px-4 py-3 rounded-xl shadow-lg border text-xs font-bold transition-all transform duration-300 translate-y-2 opacity-0 flex items-center gap-2 max-w-sm ${
-    isError ? 'bg-red-50 text-red-700 border-red-200' : 'bg-green-50 text-green-700 border-green-200'
-  }`;
-  toast.innerHTML = `<span>${isError ? '❌' : '⚡'}</span> <div>${message}</div>`;
+  toast.className = `px-4 py-3 rounded-xl shadow-lg text-xs font-bold text-white transition-all duration-300 transform translate-y-2 opacity-0 flex items-center gap-2 ${isError ? 'bg-red-600' : 'bg-green-600'}`;
+  toast.innerHTML = `<span>${isError ? '⚠️' : '✅'}</span><span>${message}</span>`;
   container.appendChild(toast);
-  setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 10);
+  setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
   setTimeout(() => {
-    toast.classList.add('translate-y-[-10px]', 'opacity-0');
-    setTimeout(() => { toast.remove(); }, 300);
+    toast.classList.add('translate-y-2', 'opacity-0');
+    setTimeout(() => toast.remove(), 300);
   }, 3500);
 }
 
-// NAVIGATION ENGINE
-window.showPage = function(pageId, buttonEl) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
-  
-  const targetPage = document.getElementById(`page-${pageId}`);
-  if(targetPage) targetPage.classList.add('active');
-  if(buttonEl) buttonEl.classList.add('active');
-};
 
-// MODAL CONTROLS REPLACE DIALOGS
-let confirmPromiseResolve = null;
-function openCustomConfirm(title, msg, placeholderKeyword = "") {
-  document.getElementById('confirmModalTitle').innerText = title;
-  document.getElementById('confirmModalMsg').innerText = msg;
-  const input = document.getElementById('confirmModalInput');
-  input.value = "";
-  if (placeholderKeyword) {
-    input.placeholder = `Type: ${placeholderKeyword}`;
-    input.classList.remove('hidden');
-  } else {
-    input.classList.add('hidden');
-  }
-  document.getElementById('confirmModal').classList.remove('hidden');
-  return new Promise((resolve) => { confirmPromiseResolve = resolve; });
+function getCurrentFormattedDate() {
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const d = new Date();
+  return `${months[d.getMonth()]} ${d.getDate()}`;
 }
 
-document.getElementById('confirmCancelBtn').addEventListener('click', () => {
-  document.getElementById('confirmModal').classList.add('hidden');
-  if(confirmPromiseResolve) confirmPromiseResolve(false);
-});
-document.getElementById('confirmProceedBtn').addEventListener('click', () => {
-  const input = document.getElementById('confirmModalInput');
-  if (!input.classList.contains('hidden')) {
-    if (input.value.trim() !== input.placeholder.replace("Type: ", "")) {
-      showToast("Confirmation string did not match exactly!", true);
-      return;
-    }
+function runStateMigrations(state) {
+  let modified = false;
+  if (!state.contests || Array.isArray(state.contests)) {
+    state.contests = defaultState.contests;
+    modified = true;
   }
-  document.getElementById('confirmModal').classList.add('hidden');
-  if(confirmPromiseResolve) confirmPromiseResolve(true);
-});
+  if (!state.adminPassword || state.adminPassword !== "spider123") {
+    state.adminPassword = "spider123";
+    modified = true;
+  }
+  if (!state.roadmap) {
+    state.roadmap = defaultState.roadmap;
+    modified = true;
+  }
+  if (!state.upcomingTopics) {
+    state.upcomingTopics = defaultState.upcomingTopics;
+    modified = true;
+  }
+  return { state, modified };
+}
 
-// INTERFACE WORKSPACE RENDERING
-window.renderAllViews = function() {
-  const state = window.appState;
-  
-  // Hero and Metadata Engine
-  document.getElementById('heroTopicText').innerText = state.currentTopic;
-  document.getElementById('weekBadge').innerText = state.weekBadgeDate;
-  document.getElementById('currentWeekNumText').innerText = state.currentWeekNum;
-  document.getElementById('weekTargetsTitle').innerText = `Week ${state.currentWeekNum} Specific Targets`;
+async function initializeAppPortal() {
+  if (hasActualFirebase) {
+    try {
+      const app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+      auth = getAuth(app);
+      
+      let user = null;
+      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        try {
+          const userCredential = await signInWithCustomToken(auth, __initial_auth_token);
+          user = userCredential.user;
+        } catch (tokenErr) {
+          console.warn("Custom token auth failed, falling back to anonymous authentication.", tokenErr);
+          const userCredential = await signInAnonymously(auth);
+          user = userCredential.user;
+        }
+      } else {
+        const userCredential = await signInAnonymously(auth);
+        user = userCredential.user;
+      }
 
-  // Aggregate global statistical nodes
-  let totalS = 0; let highestStreak = 0;
-  Object.values(state.members).forEach(m => {
-    totalS += (parseInt(m.solved) || 0);
-    if((parseInt(m.streak) || 0) > highestStreak) highestStreak = parseInt(m.streak);
+      if (!user) {
+        console.error("Authentication process failed. Invoking local database engine.");
+        loadLocalFallback();
+        return;
+      }
+      
+      const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'trackerState');
+      
+      onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const rawState = docSnap.data();
+          const { state, modified } = runStateMigrations(rawState);
+          appState = state;
+          
+          if (modified) {
+            writeStateToDB();
+          } else {
+            handleStateSync();
+          }
+        } else {
+          appState = JSON.parse(JSON.stringify(defaultState));
+          handleStateSync();
+        }
+      }, (error) => {
+        console.error("Firestore read error: ", error);
+        loadLocalFallback();
+      });
+    } catch (e) {
+      console.warn("Firebase Init failed. Falling back to Offline Local mode.", e);
+      loadLocalFallback();
+    }
+  } else {
+    loadLocalFallback();
+  }
+}
+
+function loadLocalFallback() {
+  const localVal = localStorage.getItem('team_tc_tracker_state');
+  if (localVal) {
+    const raw = JSON.parse(localVal);
+    const { state } = runStateMigrations(raw);
+    appState = state;
+  } else {
+    appState = JSON.parse(JSON.stringify(defaultState));
+  }
+  handleStateSync();
+}
+
+async function writeStateToDB() {
+  recalculateGlobalPerformanceScores();
+  if (hasActualFirebase && db && auth && auth.currentUser) {
+    try {
+      const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'trackerState');
+      await setDoc(docRef, appState);
+    } catch (e) {
+      console.error("Firestore Save Error", e);
+    }
+  } else {
+    localStorage.setItem('team_tc_tracker_state', JSON.stringify(appState));
+    handleStateSync();
+  }
+}
+
+function recalculateGlobalPerformanceScores() {
+  const membersList = Object.keys(appState.members);
+  membersList.forEach(userId => {
+    let contestSum = 0;
+    Object.keys(appState.contests.data).forEach(cat => {
+      const contestArray = appState.contests.data[cat] || [];
+      contestArray.forEach(cont => {
+        const adminVal = cont.adminOverrides?.[userId];
+        const userVal = cont.userSubmissions?.[userId];
+        let finalScore = 0;
+        if (adminVal !== undefined && adminVal !== null) {
+          finalScore = parseFloat(adminVal) || 0;
+        } else if (userVal !== undefined && userVal !== null) {
+          finalScore = parseFloat(userVal) || 0;
+        }
+        contestSum += finalScore;
+      });
+    });
+
+    const m = appState.members[userId];
+    const solvedNum = parseInt(m.solved) || 0;
+    const streakNum = parseInt(m.streak) || 0;
+    m.score = solvedNum * 10 + streakNum * 5 + contestSum * 20;
+    m.contestScoreSum = contestSum;
   });
-  document.getElementById('totalSolved').innerText = totalS;
-  document.getElementById('topStreak').innerText = `🔥 ${highestStreak}`;
+}
 
-  // Logged user dynamic updates
-  if (currentLoggedInUserId) {
-    const prof = state.members[currentLoggedInUserId];
-    document.getElementById('navUserName').innerText = prof.name;
-    document.getElementById('navUserRole').innerText = prof.role;
-    
-    // Admin toggles layout parameters
-    if (currentLoggedInUserId === 'afad' && window.isAdminSessionVerified) {
-      document.getElementById('newCategoryTriggerBtn').classList.remove('hidden');
-      document.getElementById('adminContestActionBox').classList.remove('hidden');
-      document.getElementById('adminCategoryDeleteBox').classList.remove('hidden');
-      document.getElementById('adminRoadmapActionBox').classList.remove('hidden');
-    }
+function handleStateSync() {
+  if (!appState.initialized) {
+    document.getElementById('loginOverlay').classList.remove('hidden');
+    document.getElementById('setupModal').classList.add('hidden');
+    renderLoginState();
+    return;
   }
 
-  renderLeaderboard();
-  renderAnnouncements();
-  renderMemberCards();
-  renderTasksBlock();
-  renderContestsBlock();
-  renderRoadmapBlock();
-};
+  const savedUser = sessionStorage.getItem('tc_user');
+  if (savedUser && appState.members[savedUser]) {
+    currentLoggedInUserId = savedUser;
+    document.getElementById('loginOverlay').classList.add('hidden');
+    document.getElementById('setupModal').classList.add('hidden');
+    if (currentLoggedInUserId === 'afad') {
+      isAdminSessionVerified = true;
+    }
+  } else {
+    currentLoggedInUserId = null;
+    document.getElementById('loginOverlay').classList.remove('hidden');
+    document.getElementById('setupModal').classList.add('hidden');
+    renderLoginState();
+    return;
+  }
 
-function renderLeaderboard() {
-  const lb = document.getElementById('leaderboard');
-  if(!lb) return;
-  lb.innerHTML = '';
+  recalculateGlobalPerformanceScores();
+  updateTopNav();
+  renderDashboard();
+  renderMembers();
+  renderTargets();
+  renderContestsPage();
+  renderContestLeaderboard();
+  renderRoadmap();
+  if (currentLoggedInUserId === 'afad') renderAdminPanel();
+}
+
+
+function updateTopNav() {
+  const user = appState.members[currentLoggedInUserId];
+  document.getElementById('navUserName').innerText = user.name;
+  document.getElementById('navUserRole').innerText = user.id === 'afad' ? 'Web Dev (Admin)' : user.specialization;
   
-  const sorted = Object.entries(window.appState.members).sort((a,b) => b[1].solved - a[1].solved);
-  let totalSolvedTeam = 0;
-  sorted.forEach(m => totalSolvedTeam += m[1].solved);
+  // Set navbar dot to green when successfully connected or fallback color
+  document.getElementById('activeDot').className = `w-2 h-2 rounded-full ${user.dot}`;
+  
+  document.getElementById('weekBadge').innerText = appState.weekBadgeDate === "Auto" 
+    ? getCurrentFormattedDate() 
+    : appState.weekBadgeDate;
 
-  sorted.forEach((item, idx) => {
-    const id = item[0]; const m = item[1];
-    let rankClass = "rank-other"; let medal = "";
-    if(idx===0) { rankClass="rank-1"; medal="👑"; }
-    else if(idx===1) rankClass="rank-2";
-    else if(idx===2) rankClass="rank-3";
+  if (currentLoggedInUserId === 'afad') {
+    document.getElementById('newCategoryTriggerBtn').classList.remove('hidden');
+    document.getElementById('newCategoryTriggerBtn').classList.add('flex');
+    document.getElementById('directAdminContestPanel').classList.remove('hidden');
+  } else {
+    document.getElementById('newCategoryTriggerBtn').classList.add('hidden');
+    document.getElementById('newCategoryTriggerBtn').classList.remove('flex');
+    document.getElementById('directAdminContestPanel').classList.add('hidden');
+  }
+}
 
-    const pct = totalSolvedTeam > 0 ? Math.round((m.solved / totalSolvedTeam) * 100) : 0;
+function renderDashboard() {
+  document.getElementById('heroTopicText').innerText = appState.currentTopic;
+  document.getElementById('currentWeekNumText').innerText = appState.currentWeekNum;
 
+  const mArray = Object.values(appState.members);
+  let totSolved = 0; let topSt = 0;
+  mArray.forEach(m => {
+    totSolved += parseInt(m.solved) || 0;
+    const st = parseInt(m.streak) || 0;
+    if (st > topSt) topSt = st;
+  });
+  document.getElementById('totalSolved').innerText = totSolved;
+  document.getElementById('topStreak').innerText = `🔥 ${topSt}`;
+
+  const u = appState.members[currentLoggedInUserId];
+  document.getElementById('mySolvedInput').value = u.solved;
+  document.getElementById('myStreakInput').value = u.streak;
+
+  const sorted = [...mArray].sort((a,b) => b.score - a.score);
+  const lb = document.getElementById('leaderboard');
+  lb.innerHTML = '';
+  const maxScore = sorted[0]?.score || 1;
+
+  sorted.forEach((m, idx) => {
+    let rankClass = 'rank-other';
+    if(idx===0) rankClass = 'rank-1';
+    else if(idx===1) rankClass = 'rank-2';
+    else if(idx===2) rankClass = 'rank-3';
+
+    const width = Math.max(5, (m.score / maxScore) * 100);
+    
     lb.innerHTML += `
-      <div class="lb-row">
-        <div class="lb-rank ${rankClass}">${medal ? medal : idx + 1}</div>
-        <div class="lb-avatar ${m.avatarColor}">${m.name[0]}</div>
+      <div class="lb-row animate-fade-in">
+        <div class="lb-rank ${rankClass}">#${idx+1}</div>
+        <div class="lb-avatar ${m.color}">${m.name.charAt(0)}</div>
         <div class="lb-info">
-          <div class="lb-name">${m.name}</div>
-          <div class="lb-sub">${m.role}</div>
-        </div>
-        <div class="progress-bar-wrap">
-          <div class="progress-bar"><div class="progress-fill" style="width: ${pct}%"></div></div>
+          <div class="lb-name">${m.name} <span class="text-[0.65rem] text-slate-400 font-normal ml-1">(${m.id === 'afad' ? 'Web Dev (Admin)' : m.specialization})</span></div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar"><div class="progress-fill" style="width:${width}%"></div></div>
+          </div>
         </div>
         <div class="lb-right">
-          <div class="lb-score">${m.solved} Solved</div>
-          <div class="lb-streak">🔥 ${m.streak} days</div>
+          <div class="lb-score">${m.score}</div>
+          <div class="lb-streak">🔥 ${m.streak}</div>
         </div>
       </div>
     `;
   });
-}
 
-function renderAnnouncements() {
-  const list = document.getElementById('announcementsList');
-  if(!list) return;
-  list.innerHTML = '';
-  window.appState.announcements.forEach(a => {
-    list.innerHTML += `
+  const annBox = document.getElementById('announcementsList');
+  annBox.innerHTML = '';
+  appState.announcements.forEach(a => {
+    annBox.innerHTML += `
       <div class="announce-card">
         <div class="announce-meta">
           <div class="announce-from">${a.from}</div>
@@ -945,501 +1132,569 @@ function renderAnnouncements() {
   });
 }
 
-function renderMemberCards() {
-  const wrapper = document.getElementById('memberCards');
-  if(!wrapper) return;
-  wrapper.innerHTML = '';
-  
-  Object.entries(window.appState.members).forEach(([id, m]) => {
-    wrapper.innerHTML += `
+function renderMembers() {
+  const container = document.getElementById('memberCards');
+  container.innerHTML = '';
+  Object.values(appState.members).forEach(m => {
+    container.innerHTML += `
       <div class="member-card">
         <div class="member-header">
-          <div class="member-avatar ${m.avatarColor}">${m.name[0]}</div>
+          <div class="member-avatar ${m.color}">${m.name.charAt(0)}</div>
           <div>
             <div class="member-name">${m.name}</div>
-            <div class="member-role">${m.role}</div>
+            <div class="member-role">${m.id === 'afad' ? 'Web Dev (Admin)' : m.specialization}</div>
           </div>
         </div>
         <div class="member-stats">
-          <div class="m-stat"><div class="m-stat-val text-blue-600">${m.solved}</div><div class="m-stat-label">Problems</div></div>
-          <div class="m-stat"><div class="m-stat-val text-amber-600">🔥 ${m.streak}</div><div class="m-stat-label">Streak</div></div>
-        </div>
-        <div>
-          <span class="topic-tag">Algorithms</span><span class="topic-tag">Math</span>
-          ${m.solved > 10 ? '<span class="badge badge-gold">⭐ Elite Solved</span>' : ''}
-          ${m.streak > 4 ? '<span class="badge badge-green">⚡ High Streak</span>' : ''}
+          <div class="m-stat"><div class="m-stat-val text-blue-600">${m.solved}</div><div class="m-stat-label">Solved</div></div>
+          <div class="m-stat"><div class="m-stat-val text-orange-500">${m.streak}</div><div class="m-stat-label">Streak</div></div>
+          <div class="m-stat"><div class="m-stat-val text-indigo-600">${m.score}</div><div class="m-stat-label">Score</div></div>
         </div>
       </div>
     `;
   });
 }
 
-function renderTasksBlock() {
-  const renderList = (targetArr, elementId, phaseKey) => {
-    const el = document.getElementById(elementId);
-    if(!el) return;
-    el.innerHTML = '';
-    if(targetArr.length === 0) {
-      el.innerHTML = '<p class="text-xs text-slate-400 italic p-2">No targeted task items defined.</p>';
-      return;
-    }
-    targetArr.forEach((t, index) => {
-      const isDoneByMe = t.doneBy && t.doneBy.includes(currentLoggedInUserId);
-      let whoBadges = "";
-      if (t.doneBy && t.doneBy.length > 0) {
-        whoBadges = t.doneBy.map(uId => {
-          const u = window.appState.members[uId];
-          return `<span class="inline-block px-1.5 py-0.5 text-[9px] font-bold rounded ${u?.avatarColor || 'bg-slate-100'} mx-0.5">${u?.name || uId}</span>`;
-        }).join('');
-      }
-
-      const item = document.createElement('div');
-      item.className = "task-item";
-      item.innerHTML = `
-        <div class="task-check ${isDoneByMe ? 'done' : ''}" data-phase="${phaseKey}" data-index="${index}"></div>
-        <div class="task-text ${isDoneByMe ? 'done' : ''}">
-          ${t.text}
-          <div class="task-who">${whoBadges ? 'Completed by: ' + whoBadges : '⏳ Awaiting Completion'}</div>
-        </div>
-      `;
-      // টাস্ক টিক চিহ্নে ক্লিক করলে তা রিয়েলটাইমে সিঙ্ক হবে
-      item.querySelector('.task-check').addEventListener('click', (e) => {
-        const phase = e.target.getAttribute('data-phase');
-        const idx = parseInt(e.target.getAttribute('data-index'));
-        toggleTaskCompletion(phase, idx);
-      });
-      el.appendChild(item);
-    });
-  };
-
-  renderList(window.appState.targets.learn, 'learnTasks', 'learn');
-  renderList(window.appState.targets.practice, 'practiceTasks', 'practice');
-  renderList(window.appState.targets.contest, 'contestTasks', 'contest');
-  renderList(window.appState.targets.review, 'reviewTasks', 'review');
-
-  // রেন্ডার মেম্বার প্রোগ্রেস চার্টবার
-  const prog = document.getElementById('memberProgress');
-  if(prog) {
-    prog.innerHTML = '';
-    Object.entries(window.appState.members).forEach(([id, m]) => {
-      let done = 0; let total = 0;
-      Object.values(window.appState.targets).forEach(phaseArr => {
-        phaseArr.forEach(t => {
-          total++;
-          if(t.doneBy && t.doneBy.includes(id)) done++;
-        });
-      });
-      const percent = total > 0 ? Math.round((done / total) * 100) : 0;
-      prog.innerHTML += `
-        <div class="mb-3">
-          <div class="flex justify-between text-xs font-semibold mb-1">
-            <span class="flex items-center gap-1"><span class="dot ${m.dotColor}"></span> ${m.name}</span>
-            <span class="text-slate-500">${done}/${total} Objectives (${percent}%)</span>
-          </div>
-          <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden border">
-            <div class="h-full ${m.avatarColor.replace('text-','bg-')}" style="width: ${percent}%; background-color: currentColor;"></div>
-          </div>
-        </div>
-      `;
-    });
-  }
-}
-
-function toggleTaskCompletion(phase, index) {
-  const task = window.appState.targets[phase][index];
-  if(!task.doneBy) task.doneBy = [];
+window.updateMyStats = async function() {
+  const s = parseInt(document.getElementById('mySolvedInput').value) || 0;
+  const str = parseInt(document.getElementById('myStreakInput').value) || 0;
   
-  const uIdx = task.doneBy.indexOf(currentLoggedInUserId);
-  if(uIdx > -1) {
-    task.doneBy.splice(uIdx, 1);
-    showToast("Objective status reverted.");
-  } else {
-    task.doneBy.push(currentLoggedInUserId);
-    showToast("Objective marked as achieved!");
-  }
-  window.writeStateToDB(); // ফায়ারবেসে রাইট হবে
-}
-
-function renderContestsBlock() {
-  const catsBox = document.getElementById('contestCategoriesContainer');
-  const tbody = document.getElementById('contestBody');
-  if(!catsBox || !tbody) return;
-
-  catsBox.innerHTML = '';
-  tbody.innerHTML = '';
-
-  const activeCat = window.appState.activeContestCategory || Object.keys(window.appState.contestCategories)[0];
-  document.getElementById('activeCategoryHeading').innerText = activeCat;
-  document.getElementById('activeCategoryBadge').innerText = `${window.appState.contestCategories[activeCat]?.length || 0} Records`;
-  const actionCatLabel = document.getElementById('actionBoxCategoryName');
-  if(actionCatLabel) actionCatLabel.innerText = activeCat;
-
-  Object.keys(window.appState.contestCategories).forEach(cat => {
-    const btn = document.createElement('button');
-    btn.className = `px-3 py-1.5 rounded-lg border text-xs font-bold transition ${
-      cat === activeCat ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
-    }`;
-    btn.innerText = cat;
-    btn.onclick = () => {
-      window.appState.activeContestCategory = cat;
-      window.writeStateToDB();
-    };
-    catsBox.appendChild(btn);
-  });
-
-  const rows = window.appState.contestCategories[activeCat] || [];
-  if(rows.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-xs text-slate-400 italic py-6">No spreadsheet records posted under this category division yet.</td></tr>`;
+  if (s < 0 || str < 0) {
+    showToast("Statistics values must be positive numbers.", true);
     return;
   }
-
-  rows.forEach((r, rIdx) => {
-    const tr = document.createElement('tr');
-    
-    let scoresHTML = "";
-    ['afad', 'arafat', 'munna', 'taky'].forEach(uId => {
-      const isMe = (uId === currentLoggedInUserId);
-      const currentVal = r.scores[uId] || "-";
-      if(isMe) {
-        scoresHTML += `
-          <td>
-            <input type="text" value="${currentVal}" data-row="${rIdx}" data-user="${uId}" 
-              class="w-16 text-center text-xs font-bold border rounded py-0.5 outline-none focus:border-blue-500 contest-score-edit-input">
-          </td>
-        `;
-      } else {
-        scoresHTML += `<td class="font-semibold text-slate-600">${currentVal}</td>`;
-      }
-    });
-
-    tr.innerHTML = `
-      <td class="font-bold text-slate-800 text-left">
-        ${currentLoggedInUserId === 'afad' && window.isAdminSessionVerified ? `<button class="text-red-500 mr-1 hover:text-red-700 font-normal" onclick="deleteContestRow(${rIdx})">🗑️</button>` : ''}
-        ${r.name}
-      </td>
-      <td class="text-slate-400 text-xs font-medium font-mono">${r.date}</td>
-      <td><span class="px-2 py-0.5 bg-slate-100 border text-slate-600 rounded text-xs font-medium">${r.topic}</span></td>
-      ${scoresHTML}
-    `;
-    tbody.appendChild(tr);
-  });
-
-  // কনটেস্ট স্কোর এডিট ইভেন্ট লিসেনার
-  document.querySelectorAll('.contest-score-edit-input').forEach(input => {
-    input.addEventListener('change', (e) => {
-      const rIdx = parseInt(e.target.getAttribute('data-row'));
-      const uId = e.target.getAttribute('data-user');
-      const val = e.target.value.trim();
-      
-      window.appState.contestCategories[activeCat][rIdx].scores[uId] = val || "-";
-      window.writeStateToDB();
-      showToast("Contest ledger matrix cell synced!");
-    });
-  });
-}
-
-// ADMIN ACTION: ADD ROW
-window.addContestRow = function() {
-  const name = document.getElementById('cInputName').value.trim();
-  const date = document.getElementById('cInputDate').value.trim();
-  const topic = document.getElementById('cInputTopic').value.trim();
-  if(!name) { showToast("Contest Title label cannot be blank!", true); return; }
-
-  const activeCat = window.appState.activeContestCategory;
-  window.appState.contestCategories[activeCat].push({
-    id: "r" + Date.now(),
-    name: name,
-    date: date || "N/A",
-    topic: topic || "General",
-    scores: { afad: "-", arafat: "-", munna: "-", taky: "-" }
-  });
-
-  document.getElementById('cInputName').value = "";
-  document.getElementById('cInputDate').value = "";
-  document.getElementById('cInputTopic').value = "";
-
-  window.writeStateToDB();
-  showToast("Appended record into active matrix grid.");
-};
-
-window.deleteContestRow = async function(idx) {
-  const ok = await openCustomConfirm("Delete Row?", "Remove this contest ledger entry completely?", "");
-  if(!ok) return;
-  const activeCat = window.appState.activeContestCategory;
-  window.appState.contestCategories[activeCat].splice(idx, 1);
-  window.writeStateToDB();
-  showToast("Record row dropped.");
-};
-
-// CATEGORY MODAL OPENS
-window.openNewCategoryModal = function() {
-  document.getElementById('newCategoryNameInput').value = "";
-  document.getElementById('newCategoryModal').classList.remove('hidden');
-};
-document.getElementById('cancelCategoryModalBtn').addEventListener('click', () => {
-  document.getElementById('newCategoryModal').classList.add('hidden');
-});
-document.getElementById('submitCategoryModalBtn').addEventListener('click', () => {
-  const name = document.getElementById('newCategoryNameInput').value.trim();
-  if (!name) { showToast("Category structure label cannot be blank!", true); return; }
-  if (window.appState.contestCategories[name]) { showToast("Category ledger label key already exists!", true); return; }
-
-  window.appState.contestCategories[name] = [];
-  window.appState.activeContestCategory = name;
-  document.getElementById('newCategoryModal').classList.add('hidden');
-  window.writeStateToDB();
-  showToast(`Category [${name}] schema initialized.`);
-});
-
-window.triggerDeleteCategory = async function() {
-  const activeCat = window.appState.activeContestCategory;
-  if (Object.keys(window.appState.contestCategories).length <= 1) {
-    showToast("Cannot delete the last remaining matrix schema category!", true);
-    return;
-  }
-  const ok = await openCustomConfirm(`Purge Section?`, `Drop whole category [${activeCat}]? Type: CONFIRM DELETE`, "CONFIRM DELETE");
-  if(!ok) return;
-
-  delete window.appState.contestCategories[activeCat];
-  window.appState.activeContestCategory = Object.keys(window.appState.contestCategories)[0];
-  window.writeStateToDB();
-  showToast("Schema category section purged completely.");
-};
-
-function renderRoadmapBlock() {
-  const container = document.getElementById('roadmapContainer');
-  if(!container) return;
-  container.innerHTML = '';
-
-  // গ্রুপিং বাই ইয়ার
-  const phases = {};
-  window.appState.roadmap.forEach(node => {
-    if(!phases[node.year]) phases[node.year] = [];
-    phases[node.year].push(node);
-  });
-
-  Object.entries(phases).forEach(([year, nodes]) => {
-    let nodesHTML = "";
-    nodes.forEach(n => {
-      let statusClass = "roadmap-item";
-      if(n.status === 'done') statusClass += " done-item";
-      else if(n.status === 'current') statusClass += " current-item";
-
-      nodesHTML += `
-        <div class="${statusClass} flex items-center gap-1.5">
-          ${currentLoggedInUserId === 'afad' && window.isAdminSessionVerified ? `<span class="cursor-pointer font-normal text-slate-400 hover:text-indigo-600" onclick="cycleRoadmapStatus('${n.id}')">🔄</span>` : ''}
-          <span>${n.title}</span>
-          ${currentLoggedInUserId === 'afad' && window.isAdminSessionVerified ? `<span class="cursor-pointer text-red-400 hover:text-red-600 ml-1" onclick="deleteRoadmapNode('${n.id}')">×</span>` : ''}
-        </div>
-      `;
-    });
-
-    container.innerHTML += `
-      <div class="roadmap-year">
-        <div class="year-header">
-          <div class="year-num">${year}</div>
-        </div>
-        <div class="roadmap-items">${nodesHTML}</div>
-      </div>
-    `;
-  });
-}
-
-window.addRoadmapNode = function() {
-  const yr = document.getElementById('roadmapYearInput').value.trim();
-  const title = document.getElementById('roadmapNodeInput').value.trim();
-  if(!yr || !title) { showToast("Both Phase timeline and Node strings required!", true); return; }
-
-  window.appState.roadmap.push({
-    id: "node" + Date.now(),
-    year: yr,
-    title: title,
-    status: "pending"
-  });
-  document.getElementById('roadmapNodeInput').value = "";
-  window.writeStateToDB();
-  showToast("Timeline node architecture updated.");
-};
-
-window.cycleRoadmapStatus = function(nodeId) {
-  const n = window.appState.roadmap.find(x => x.id === nodeId);
-  if(!n) return;
-  if(n.status === 'pending') n.status = 'current';
-  else if(n.status === 'current') n.status = 'done';
-  else n.status = 'pending';
-  window.writeStateToDB();
-};
-
-window.deleteRoadmapNode = function(nodeId) {
-  window.appState.roadmap = window.appState.roadmap.filter(x => x.id !== nodeId);
-  window.writeStateToDB();
-  showToast("Node dropped.");
-};
-
-// USER HUB STATS UPDATER
-window.updateMyStats = function() {
-  const sVal = parseInt(document.getElementById('mySolvedInput').value);
-  const stVal = parseInt(document.getElementById('myStreakInput').value);
-
-  if(isNaN(sVal) || isNaN(stVal) || sVal < 0 || stVal < 0) {
-    showToast("Stats matrices cannot contain negative integers or NaN!", true);
-    return;
-  }
-
-  window.appState.members[currentLoggedInUserId].solved = sVal;
-  window.appState.members[currentLoggedInUserId].streak = stVal;
   
-  window.writeStateToDB();
-  showToast("Your progress matrix successfully synchronized to cloud model!");
-};
+  appState.members[currentLoggedInUserId].solved = s;
+  appState.members[currentLoggedInUserId].streak = str;
+  await writeStateToDB();
+  showToast("Your stats synced securely!");
+}
 
-// ADMIN VIEW SPECIFIC RENDERING
-window.renderAdminView = function() {
-  document.getElementById('adminTopicInput').value = window.appState.currentTopic;
-  document.getElementById('adminWeekBadgeInput').value = window.appState.weekBadgeDate;
-  document.getElementById('adminWeekNumInput').value = window.appState.currentWeekNum;
+window.showPage = function(pageId, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(`page-${pageId}`).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
 
-  const keysWrap = document.getElementById('adminMemberKeysContainer');
-  if(!keysWrap) return;
-  keysWrap.innerHTML = '';
 
-  Object.entries(window.appState.members).forEach(([id, m]) => {
-    keysWrap.innerHTML += `
-      <div class="p-2 bg-slate-50 border rounded-lg text-xs space-y-1">
-        <div class="font-bold text-slate-700 flex items-center gap-1"><span class="dot ${m.dotColor}"></span> ${m.name}</div>
-        <input type="email" value="${m.email}" id="admEmail-${id}" placeholder="Email string" class="w-full p-1 border rounded bg-white">
-        <input type="text" value="${m.password}" id="admPass-${id}" placeholder="Password text" class="w-full p-1 border rounded bg-white font-mono">
-      </div>
-    `;
-  });
-};
-
-// ADMIN PARAMETERS REVISION APPLY
-window.applyAdminSettingsChanges = function() {
-  let err = false;
-  Object.keys(window.appState.members).forEach(id => {
-    const email = document.getElementById(`admEmail-${id}`).value.trim();
-    const pass = document.getElementById(`admPass-${id}`).value.trim();
-    if(!email || !pass) { err = true; }
-    else {
-      window.appState.members[id].email = email;
-      window.appState.members[id].password = pass;
-    }
-  });
-
-  if (err) {
-    showToast("Email and passwords cannot be empty strings!", true);
+window.tryOpenAdmin = function(btn) {
+  if (currentLoggedInUserId !== 'afad') {
+    showToast("Access Denied. Only Afad (Admin) can access this panel.", true);
     return;
   }
-
-  window.appState.currentTopic = document.getElementById('adminTopicInput').value.trim();
-  window.appState.weekBadgeDate = document.getElementById('adminWeekBadgeInput').value.trim();
-  window.appState.currentWeekNum = parseInt(document.getElementById('adminWeekNumInput').value) || 1;
-
-  window.writeStateToDB();
-  showToast("Admin Panel changes applied successfully across all devices!");
-};
-
-window.postAdminAnnouncement = function() {
-  const txt = document.getElementById('adminAnnounceText').value.trim();
-  if(!txt) return;
-  window.appState.announcements.unshift({
-    from: "📢 Admin (Afad)",
-    text: txt,
-    time: "Just Now"
-  });
-  document.getElementById('adminAnnounceText').value = '';
-  window.writeStateToDB();
-  showToast("Broadcasting announcement to all active dashboards!");
-};
-
-window.triggerResetSystem = async function() {
-  const confirmation = await openCustomConfirm("Format Global Cloud Tree?", "This action completely factory resets the Firebase cloud model tree. Write: CONFIRM RESET", "CONFIRM RESET");
-  if (confirmation) {
-    window.appState = JSON.parse(JSON.stringify(window.defaultState));
-    window.writeStateToDB();
-    showToast("Entire cloud model initialized to defaults. Running Setup.");
-    setTimeout(() => window.location.reload(), 1000);
+  if (isAdminSessionVerified) {
+    window.showPage('admin', btn);
   } else {
-    showToast("Operation Aborted.", true);
+    document.getElementById('adminAuthModal').classList.remove('hidden');
+    window.pendingAdminBtn = btn;
   }
-};
-
-// ADMIN ACCESS GATEWAY CONTROLS
-window.tryOpenAdmin = function(tabEl) {
-  if(currentLoggedInUserId !== 'afad') {
-    showToast("Access Denied: Only Afad retains root administration keys!", true);
-    return;
-  }
-  if(window.isAdminSessionVerified) {
-    window.showPage('admin', tabEl);
-    window.renderAdminView();
-    return;
-  }
-  document.getElementById('adminVerifyPassInput').value = "";
-  document.getElementById('adminAuthModal').classList.remove('hidden');
-};
+}
 
 document.getElementById('cancelAdminAuthBtn').addEventListener('click', () => {
   document.getElementById('adminAuthModal').classList.add('hidden');
+  document.getElementById('adminVerifyPassInput').value = '';
 });
+
 document.getElementById('submitAdminAuthBtn').addEventListener('click', () => {
-  const p = document.getElementById('adminVerifyPassInput').value.trim();
-  if(p === 'spider123') {
-    window.isAdminSessionVerified = true;
+  const pass = document.getElementById('adminVerifyPassInput').value.trim();
+  if (pass === 'spider123') {
+    isAdminSessionVerified = true;
     document.getElementById('adminAuthModal').classList.add('hidden');
-    showToast("Root Session Key authorization valid.");
-    
-    const adminTabBtn = document.querySelector("button[onclick*='tryOpenAdmin']");
-    window.showPage('admin', adminTabBtn);
-    window.renderAdminView();
+    document.getElementById('adminVerifyPassInput').value = '';
+    window.showPage('admin', window.pendingAdminBtn);
+    showToast("Admin session verified.");
   } else {
-    showToast("Authorization key signature mismatch!", true);
+    showToast("Incorrect Master Admin Password!", true);
   }
 });
 
-// COMPREHENSIVE AUTHENTICATION SUBSYSTEM INITIALIZATION
-window.initializeAppPortal = function() {
-  // সিঙ্ক লুপ চলাকালীন সময়ে ইন্টারফেস লোডিং টেক্সট ব্লক করে রাখবে
-  if(window.appState && window.appState.initialized) {
-    document.getElementById('loginSubtitle').innerText = "Database Active. Authenticate credentials.";
-  } else {
-    document.getElementById('loginSubtitle').innerText = "System uninitialized. First time Admin setup required.";
+function renderTargets() {
+  const sections = ['learn', 'practice', 'contest', 'review'];
+  document.getElementById('weekTargetsTitle').innerText = `Week ${appState.currentWeekNum} Targets — ${appState.currentTopic}`;
+  
+  sections.forEach(sec => {
+    const el = document.getElementById(`${sec}Tasks`);
+    el.innerHTML = '';
+    appState.tasks[sec].forEach((t, i) => {
+      const taskId = `${sec}_${i}`;
+      const isDone = appState.taskState[taskId]?.[currentLoggedInUserId];
+      const doneClass = isDone ? 'done' : '';
+      el.innerHTML += `
+        <div class="task-item">
+          <div class="task-check ${doneClass}" onclick="toggleTask('${taskId}')"></div>
+          <div class="task-text ${doneClass}">${t.text} <div class="task-who">${t.who}</div></div>
+        </div>
+      `;
+    });
+  });
+
+  const pBox = document.getElementById('memberProgress');
+  pBox.innerHTML = '';
+  const totalTasks = sections.reduce((acc, s) => acc + appState.tasks[s].length, 0);
+  
+  Object.values(appState.members).forEach(m => {
+    let completed = 0;
+    sections.forEach(sec => {
+      appState.tasks[sec].forEach((t, i) => {
+        if(appState.taskState[`${sec}_${i}`]?.[m.id]) completed++;
+      });
+    });
+    const pct = totalTasks === 0 ? 0 : Math.round((completed/totalTasks)*100);
+    pBox.innerHTML += `
+      <div style="margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px; font-weight:600;">
+          <span style="display:flex; align-items:center; gap:6px;"><span class="dot ${m.dot}"></span>${m.name}</span>
+          <span class="text-blue-600">${pct}%</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+    `;
+  });
+}
+
+
+window.toggleTask = async function(taskId) {
+  if (!appState.taskState[taskId]) appState.taskState[taskId] = {};
+  appState.taskState[taskId][currentLoggedInUserId] = !appState.taskState[taskId][currentLoggedInUserId];
+  await writeStateToDB();
+};
+
+function renderContestsPage() {
+  const catContainer = document.getElementById('contestCategoriesContainer');
+  catContainer.innerHTML = '';
+  
+  appState.contests.categories.forEach(cat => {
+    const isActive = cat === appState.contests.activeCategory;
+    const btnClass = isActive 
+      ? 'bg-blue-600 text-white shadow-md' 
+      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50';
+      
+    catContainer.innerHTML += `
+      <button onclick="switchContestCategory('${cat}')" class="px-4 py-2 rounded-lg text-xs font-bold transition ${btnClass}">
+        ${cat}
+      </button>
+    `;
+  });
+
+  document.getElementById('activeCategoryHeading').innerText = appState.contests.activeCategory;
+  
+  const cBody = document.getElementById('contestBody');
+  cBody.innerHTML = '';
+  
+  const activeContests = appState.contests.data[appState.contests.activeCategory] || [];
+  
+  const userSelect = document.getElementById('userSubmitContestSelect');
+  const adminSelect = document.getElementById('admScoreOverrideContestSelect');
+  userSelect.innerHTML = '';
+  adminSelect.innerHTML = '';
+
+  activeContests.forEach(c => {
+    userSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+    adminSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+    
+    const getFinalScoreHtml = (userId) => {
+      const adminVal = c.adminOverrides?.[userId];
+      const userVal = c.userSubmissions?.[userId];
+      
+      if (adminVal !== undefined && adminVal !== null) {
+        return `<span class="text-indigo-700 font-bold bg-indigo-50 px-2 py-1 rounded">${adminVal}</span>`;
+      } else if (userVal !== undefined && userVal !== null) {
+        return `<span class="text-blue-600 font-medium">${userVal}</span>`;
+      } else {
+        return `<span class="text-slate-300">—</span>`;
+      }
+    };
+
+    cBody.innerHTML += `
+      <tr>
+        <td class="font-bold text-slate-700">
+          ${currentLoggedInUserId === 'afad' ? `<button onclick="deleteContestRow('${c.id}')" class="text-red-500 hover:text-red-700 mr-2 text-xs">🗑️</button>` : ''}
+          ${c.name}
+        </td>
+        <td class="text-xs text-slate-500 font-mono">${c.date}</td>
+        <td><span class="text-xs px-2 py-1 bg-slate-100 rounded-lg border">${c.topic}</span></td>
+        <td class="font-mono text-sm">${getFinalScoreHtml('afad')}</td>
+        <td class="font-mono text-sm">${getFinalScoreHtml('arafat')}</td>
+        <td class="font-mono text-sm">${getFinalScoreHtml('munna')}</td>
+        <td class="font-mono text-sm">${getFinalScoreHtml('taky')}</td>
+      </tr>
+    `;
+  });
+
+  if (activeContests.length === 0) {
+    cBody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-400 text-sm">No contests created in this section yet.</td></tr>`;
+  }
+}
+
+// Render dynamic contest rankings
+function renderContestLeaderboard() {
+  const container = document.getElementById('contestLeaderboard');
+  if (!container) return;
+  container.innerHTML = '';
+  
+  const sorted = Object.values(appState.members).sort((a,b) => (b.contestScoreSum || 0) - (a.contestScoreSum || 0));
+  const maxScore = sorted[0]?.contestScoreSum || 1;
+
+  sorted.forEach((m, idx) => {
+    let rankClass = 'rank-other';
+    if(idx===0) rankClass = 'rank-1';
+    else if(idx===1) rankClass = 'rank-2';
+    else if(idx===2) rankClass = 'rank-3';
+
+    const width = Math.max(5, ((m.contestScoreSum || 0) / maxScore) * 100);
+    
+    container.innerHTML += `
+      <div class="lb-row animate-fade-in">
+        <div class="lb-rank ${rankClass}">#${idx+1}</div>
+        <div class="lb-avatar ${m.color}">${m.name.charAt(0)}</div>
+        <div class="lb-info">
+          <div class="lb-name">${m.name}</div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar"><div class="progress-fill" style="width:${width}%"></div></div>
+          </div>
+        </div>
+        <div class="lb-right">
+          <div class="lb-score">${(m.contestScoreSum || 0).toFixed(1)} Pts</div>
+        </div>
+      </div>
+    `;
+  });
+}
+
+window.deleteContestRow = function(contestId) {
+  showCustomConfirm(
+    "Remove Contest",
+    "Are you sure you want to permanently delete this contest record?",
+    null,
+    async () => {
+      const activeCat = appState.contests.activeCategory;
+      appState.contests.data[activeCat] = appState.contests.data[activeCat].filter(c => c.id !== contestId);
+      await writeStateToDB();
+      showToast("Contest deleted successfully.");
+    }
+  );
+}
+
+window.switchContestCategory = async function(cat) {
+  appState.contests.activeCategory = cat;
+  await writeStateToDB();
+};
+
+window.openNewCategoryModal = function() {
+  document.getElementById('newCategoryModal').classList.remove('hidden');
+};
+
+document.getElementById('cancelCategoryModalBtn').addEventListener('click', () => {
+  document.getElementById('newCategoryModal').classList.add('hidden');
+});
+
+document.getElementById('submitCategoryModalBtn').addEventListener('click', async () => {
+  const name = document.getElementById('newCategoryNameInput').value.trim();
+  if(!name) return showToast("Category name required!", true);
+  if(appState.contests.categories.includes(name)) return showToast("Category already exists!", true);
+  
+  appState.contests.categories.push(name);
+  appState.contests.data[name] = [];
+  appState.contests.activeCategory = name;
+  await writeStateToDB();
+  
+  document.getElementById('newCategoryNameInput').value = '';
+  document.getElementById('newCategoryModal').classList.add('hidden');
+  showToast(`Section "${name}" created!`);
+});
+
+window.submitUserContestScore = async function() {
+  const contestId = document.getElementById('userSubmitContestSelect').value;
+  const score = parseFloat(document.getElementById('userSubmittedScoreInput').value);
+  
+  if (!contestId || isNaN(score) || score < 0 || score > 10) {
+    return showToast("Please enter a valid score between 0 and 10.", true);
+  }
+
+  const activeCat = appState.contests.activeCategory;
+  const contest = appState.contests.data[activeCat].find(c => c.id === contestId);
+  
+  if (contest) {
+    if (!contest.userSubmissions) contest.userSubmissions = {};
+    contest.userSubmissions[currentLoggedInUserId] = score;
+    await writeStateToDB();
+    showToast("Score successfully submitted!");
+    document.getElementById('userSubmittedScoreInput').value = '';
   }
 };
 
-// SETUP PROCESS COMPLETION
-document.getElementById('submitSetupBtn').addEventListener('click', () => {
-  const state = window.appState;
-  let hasEmpty = false;
+window.addNewContestToCategory = async function() {
+  const name = document.getElementById('admNewContestName').value.trim();
+  const date = document.getElementById('admNewContestDate').value.trim();
+  const topic = document.getElementById('admNewContestTopic').value.trim();
+  
+  if(!name || !date || !topic) return showToast("All fields required!", true);
+  
+  const activeCat = appState.contests.activeCategory;
+  appState.contests.data[activeCat].push({
+    id: `cont_${Date.now()}`,
+    name, date, topic,
+    userSubmissions: { afad: null, arafat: null, munna: null, taky: null },
+    adminOverrides: { afad: null, arafat: null, munna: null, taky: null }
+  });
+  
+  await writeStateToDB();
+  showToast("Contest created!");
+  document.getElementById('admNewContestName').value = '';
+  document.getElementById('admNewContestDate').value = '';
+  document.getElementById('admNewContestTopic').value = '';
+};
 
-  ['afad', 'arafat', 'munna', 'taky'].forEach(id => {
-    const email = document.getElementById(`regEmail-${id}`).value.trim();
-    const pass = document.getElementById(`regPass-${id}`).value.trim();
-    if(!email || !pass) hasEmpty = true;
-    state.members[id].email = email;
-    state.members[id].password = pass;
+
+window.overrideMemberScore = async function() {
+  const contestId = document.getElementById('admScoreOverrideContestSelect').value;
+  const userId = document.getElementById('admScoreOverrideUserSelect').value;
+  const score = parseFloat(document.getElementById('admScoreOverrideVal').value);
+  
+  if(!contestId || isNaN(score)) return showToast("Valid contest and score needed.", true);
+  
+  const activeCat = appState.contests.activeCategory;
+  const contest = appState.contests.data[activeCat].find(c => c.id === contestId);
+  
+  if(contest) {
+    if (!contest.adminOverrides) contest.adminOverrides = {};
+    contest.adminOverrides[userId] = score;
+    await writeStateToDB();
+    showToast(`Admin override applied for ${userId}!`);
+    document.getElementById('admScoreOverrideVal').value = '';
+  }
+};
+
+window.clearOverrideScore = async function() {
+  const contestId = document.getElementById('admScoreOverrideContestSelect').value;
+  const userId = document.getElementById('admScoreOverrideUserSelect').value;
+  const activeCat = appState.contests.activeCategory;
+  const contest = appState.contests.data[activeCat].find(c => c.id === contestId);
+  
+  if(contest && contest.adminOverrides) {
+    contest.adminOverrides[userId] = null;
+    await writeStateToDB();
+    showToast(`Override cleared for ${userId}`);
+  }
+};
+
+function renderRoadmap() {
+  const rm = document.getElementById('roadmapContent');
+  rm.innerHTML = '';
+  appState.roadmap.forEach(r => {
+    let itemsHtml = r.items.map(i => {
+      let cls = '';
+      if(i.done) cls = 'done-item';
+      if(i.current) cls = 'current-item';
+      return `<div class="roadmap-item ${cls}">${i.text}</div>`;
+    }).join('');
+    rm.innerHTML += `
+      <div class="roadmap-year animate-fade-in">
+        <div class="year-header"><div class="year-num">${r.year}</div><div class="year-title">${r.title}</div></div>
+        <div class="roadmap-items">${itemsHtml}</div>
+      </div>
+    `;
+  });
+  const up = document.getElementById('upcomingTopics');
+  up.innerHTML = '';
+  appState.upcomingTopics.forEach(t => {
+    up.innerHTML += `<div class="roadmap-item">${t}</div>`;
+  });
+}
+
+function renderAdminPanel() {
+  const userRows = document.getElementById('adminUserPassRows');
+  userRows.innerHTML = '';
+  Object.values(appState.members).forEach(m => {
+    userRows.innerHTML += `
+      <div class="flex items-center gap-3 bg-white p-2 rounded-lg border">
+        <span class="font-bold text-xs w-16">${m.name}</span>
+        <input type="email" id="adminUpdateEmail-${m.id}" value="${m.email}" class="flex-1 px-2 py-1 border rounded text-xs outline-none">
+        <input type="text" id="adminUpdatePass-${m.id}" value="${m.password}" class="flex-1 px-2 py-1 border rounded text-xs font-mono outline-none">
+      </div>
+    `;
   });
 
-  if(hasEmpty) {
-    showToast("All registration profiles require non-empty credential values!", true);
+  document.getElementById('adminTopicInput').value = appState.currentTopic;
+  document.getElementById('adminWeekNumInput').value = appState.currentWeekNum;
+  document.getElementById('adminWeekBadgeInput').value = appState.weekBadgeDate;
+}
+
+window.saveAdminCredentials = async function() {
+  let anyEmpty = false;
+  Object.keys(appState.members).forEach(id => {
+    const email = document.getElementById(`adminUpdateEmail-${id}`).value.trim();
+    const pass = document.getElementById(`adminUpdatePass-${id}`).value.trim();
+    if (!email || !pass) {
+      anyEmpty = true;
+    } else {
+      appState.members[id].email = email;
+      appState.members[id].password = pass;
+    }
+  });
+
+  if (anyEmpty) {
+    showToast("Credentials field entries cannot be empty.", true);
     return;
   }
 
-  state.initialized = true;
-  document.getElementById('setupModal').classList.add('hidden');
-  document.getElementById('loginOverlay').classList.remove('hidden');
+  appState.currentTopic = document.getElementById('adminTopicInput').value.trim();
+  appState.currentWeekNum = parseInt(document.getElementById('adminWeekNumInput').value) || 1;
+  appState.weekBadgeDate = document.getElementById('adminWeekBadgeInput').value.trim();
+
+  await writeStateToDB();
+  showToast("Member credentials updated successfully!");
+};
+
+window.postAdminAnnouncement = async function() {
+  const txt = document.getElementById('adminAnnounceText').value.trim();
+  if(!txt) return;
+  appState.announcements.unshift({ from: "🛡️ Admin Afad", text: txt, time: "Just now" });
+  await writeStateToDB();
+  document.getElementById('adminAnnounceText').value = '';
+  showToast("Announcement posted!");
+};
+
+
+function showCustomConfirm(title, message, requiresInputKeyword, onProceed) {
+  const modal = document.getElementById('confirmModal');
+  const modalTitle = document.getElementById('confirmModalTitle');
+  const modalMsg = document.getElementById('confirmModalMsg');
+  const modalInput = document.getElementById('confirmModalInput');
   
-  window.writeStateToDB();
-  showToast("Application Matrix Core Initialized successfully.");
+  modalTitle.innerText = title;
+  modalMsg.innerText = message;
+  
+  if (requiresInputKeyword) {
+    modalInput.classList.remove('hidden');
+    modalInput.value = '';
+  } else {
+    modalInput.classList.add('hidden');
+  }
+  
+  modal.classList.remove('hidden');
+  currentConfirmAction = { requiresInputKeyword, onProceed };
+}
+
+document.getElementById('confirmCancelBtn').addEventListener('click', () => {
+  document.getElementById('confirmModal').classList.add('hidden');
+  currentConfirmAction = null;
 });
 
-// LOG-IN INTERFACE TRIGGER
+document.getElementById('confirmProceedBtn').addEventListener('click', () => {
+  if (!currentConfirmAction) return;
+  
+  if (currentConfirmAction.requiresInputKeyword) {
+    const userInput = document.getElementById('confirmModalInput').value.trim();
+    if (userInput !== currentConfirmAction.requiresInputKeyword) {
+      showToast("Verification keyword mismatch!", true);
+      return;
+    }
+  }
+  
+  document.getElementById('confirmModal').classList.add('hidden');
+  currentConfirmAction.onProceed();
+  currentConfirmAction = null;
+});
+
+window.triggerResetSystem = function() {
+  showCustomConfirm(
+    "Dangerous Operation", 
+    "This operation completely wipes all member progress and resets the tracker setup. To proceed, write 'CONFIRM RESET' below.", 
+    "CONFIRM RESET", 
+    async () => {
+      appState = JSON.parse(JSON.stringify(defaultState));
+      appState.initialized = false; 
+      sessionStorage.removeItem('tc_user');
+      currentLoggedInUserId = null;
+      isAdminSessionVerified = false;
+      await writeStateToDB();
+      showToast("System wiped and reset successfully!");
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    }
+  );
+};
+
+
+document.getElementById('submitSetupBtn').addEventListener('click', async () => {
+  const ids = ['afad', 'arafat', 'munna', 'taky'];
+  let missing = false;
+  
+  ids.forEach(id => {
+    const email = document.getElementById(`regEmail-${id}`).value.trim();
+    const pass = document.getElementById(`regPass-${id}`).value.trim();
+    if (!email || !pass) { missing = true; } 
+    else {
+      appState.members[id].email = email;
+      appState.members[id].password = pass;
+    }
+  });
+
+  if (missing) {
+    showToast("Please provide all 4 member emails & initial passwords!", true);
+    return;
+  }
+
+  appState.initialized = true;
+  await writeStateToDB();
+  showToast("Team TC Tracker initialized successfully!");
+  document.getElementById('setupModal').classList.add('hidden');
+  handleStateSync();
+});
+
+window.renderLoginState = function() {
+  const user = document.getElementById('loginUserSelect').value;
+  const emailCont = document.getElementById('loginEmailContainer');
+  const passLabel = document.getElementById('loginPasswordLabel');
+  const passInput = document.getElementById('loginPassword');
+  const submitBtn = document.getElementById('loginSubmitBtn');
+  const warningMsg = document.getElementById('loginWarningMsg');
+  const subtitle = document.getElementById('loginSubtitle');
+
+  if (!appState.initialized) {
+    emailCont.classList.add('hidden');
+    subtitle.innerText = "System uninitialized. Preview Password verification required.";
+    if (user === 'afad') {
+      passLabel.innerText = "Preview Password";
+      passInput.placeholder = "Enter fixed preview password";
+      passInput.disabled = false;
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Enter Security Interface";
+      submitBtn.className = "w-full py-3.5 bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 text-white rounded-xl font-bold transition shadow-lg shadow-red-500/25 text-sm mt-2";
+      warningMsg.classList.add('hidden');
+    } else {
+      passLabel.innerText = "Passphrase / Password";
+      passInput.placeholder = "System Locked";
+      passInput.disabled = true;
+      submitBtn.disabled = true;
+      submitBtn.innerText = "System Locked";
+      submitBtn.className = "w-full py-3.5 bg-slate-300 text-slate-500 rounded-xl font-bold transition text-sm mt-2 cursor-not-allowed";
+      warningMsg.innerText = "Afad must configure and set up the system first.";
+      warningMsg.classList.remove('hidden');
+    }
+  } else {
+    emailCont.classList.remove('hidden');
+    subtitle.innerText = "Please select your profile and enter your credentials.";
+    passLabel.innerText = "Passphrase / Password";
+    passInput.placeholder = "Enter password";
+    passInput.disabled = false;
+    submitBtn.disabled = false;
+    submitBtn.innerText = "Verify Credentials & Enter Tracker";
+    submitBtn.className = "w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl font-bold transition shadow-lg shadow-blue-500/25 text-sm mt-2";
+    warningMsg.classList.add('hidden');
+  }
+};
+
+document.getElementById('loginUserSelect').addEventListener('change', window.renderLoginState);
+
 document.getElementById('loginSubmitBtn').addEventListener('click', () => {
   const user = document.getElementById('loginUserSelect').value;
   const pass = document.getElementById('loginPassword').value.trim();
 
-  if (!window.appState.initialized) {
+  if (!appState.initialized) {
     if (user === 'afad') {
       if (pass === 'spider123') {
         document.getElementById('loginOverlay').classList.add('hidden');
@@ -1449,74 +1704,39 @@ document.getElementById('loginSubmitBtn').addEventListener('click', () => {
       } else {
         showToast("Incorrect Preview Password!", true);
       }
-    } else {
-      showToast("App is uninitialized. Afad must log in first with master key to setup.", true);
     }
     return;
   }
 
   const email = document.getElementById('loginEmail').value.trim();
-  const profile = window.appState.members[user];
-  if (profile && profile.email.toLowerCase() === email.toLowerCase() && profile.password === pass) {
+  const profile = appState.members[user];
+  if (profile.email.toLowerCase() === email.toLowerCase() && profile.password === pass) {
     currentLoggedInUserId = user;
     sessionStorage.setItem('tc_user', user);
     
     showToast(`Welcome back, ${profile.name}!`);
     document.getElementById('loginPassword').value = '';
     document.getElementById('loginEmail').value = '';
-    document.getElementById('loginOverlay').classList.add('hidden');
     
     if (user === 'afad') {
-      window.isAdminSessionVerified = true;
+      isAdminSessionVerified = true;
     }
     
-    // লোকাল স্ট্যাট ইনপুট বক্সে ডিফল্ট ভ্যালু সেট করা
-    document.getElementById('mySolvedInput').value = profile.solved || 0;
-    document.getElementById('myStreakInput').value = profile.streak || 0;
-    
-    window.renderAllViews();
+    handleStateSync();
   } else {
-    showToast("Invalid credentials matrix match!", true);
+    showToast("Invalid credentials!", true);
   }
 });
 
 window.logout = function() {
   sessionStorage.removeItem('tc_user');
   currentLoggedInUserId = null;
-  window.isAdminSessionVerified = false;
-  
-  // অ্যাডমিন সেটিংস বক্সগুলো হাইড করা
-  document.getElementById('newCategoryTriggerBtn').classList.add('hidden');
-  document.getElementById('adminContestActionBox').classList.add('hidden');
-  document.getElementById('adminCategoryDeleteBox').classList.add('hidden');
-  document.getElementById('adminRoadmapActionBox').classList.add('hidden');
-  
-  document.getElementById('loginOverlay').classList.remove('hidden');
-  showPage('dashboard', document.querySelector('.nav-tab'));
-  showToast("Session signed out successfully.");
+  isAdminSessionVerified = false;
+  handleStateSync();
 };
 
 window.onload = () => {
-  window.initializeAppPortal();
-  
-  // সেশন রিকভারি চেক
-  const savedUser = sessionStorage.getItem('tc_user');
-  if(savedUser && window.appState && window.appState.initialized) {
-    // ফায়ারবেস থেকে ডেটা লোড হওয়ার জন্য একটু সময় দেওয়া
-    setTimeout(() => {
-      if(window.appState.members && window.appState.members[savedUser]) {
-        currentLoggedInUserId = savedUser;
-        if(savedUser === 'afad') window.isAdminSessionVerified = true;
-        document.getElementById('loginOverlay').classList.add('hidden');
-        
-        const profile = window.appState.members[savedUser];
-        document.getElementById('mySolvedInput').value = profile.solved || 0;
-        document.getElementById('myStreakInput').value = profile.streak || 0;
-        
-        window.renderAllViews();
-      }
-    }, 1500);
-  }
+  initializeAppPortal();
 };
 </script>
 </body>
